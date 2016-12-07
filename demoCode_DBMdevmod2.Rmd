@@ -1,0 +1,303 @@
+---
+title: "demoCode_DBMdevmod2"
+author: "Kym D Perry"
+date: "13 October 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      warning = FALSE, message = FALSE, 
+                      dpi = 144, fig.width = 12, fig.height = 8)
+
+# clear workspace, load packages
+
+rm(list = ls())
+library(DBMdevmod2)
+library(dplyr)
+library(magrittr)
+library(readr)
+library(readxl)
+library(lubridate)
+library(reshape2)
+library(parallel) # for mclapply
+library(ggplot2)
+
+
+```
+
+## Running phenological models for diamondback moth using custom R package DBMdevmod2
+
+This document demonstrates how to run Briere's temperature-based model to predict the development rate of diamondback moth, Plutella xylostella, using custom R package DBMdevmod2.
+
+Package authors: Kym. D. Perry, Stephen M. Pederson, Michael A. Keller
+Version date: October 2016
+Maintainer: Kym. D Perry kym.perry@adelaide.edu.au
+
+For documentation and help pages, type ?<functionName>
+Index on help pages contains the full list of functions
+
+## Run model for single location
+
+```{r Modelling, single location}
+
+# Read in a raw climate data file containing a time series of temperature observations.
+df <- read_csv(
+  "C:/UserData/Kym/PhD/Data/climateData/halfHourlyStation2015/HM01X_Data_026100_999999998908531_PadthaWay_South.txt") 
+head(df) # the raw df
+
+# Format and aggregate into hourly observations
+df %<>% DBMdevmod2::formatBOMstdata()
+head(df) # the formatted df
+
+# Create a data.frame with the DBM development parameters required for Briere's model
+# Note, DBM parameters were generated in R package `nlsreg` using development data from Liu 2002.
+devParams <- data.frame(
+  egg = c(0.0003592, 1.754, 35.08, 4.347),
+  instar_1_2 = c(0.00036, -2.9122, 32.4565, 60.5092),
+  instar_3 = c(0.0009688, 0.7893, 32.04, 14.53),
+  instar_4 = c(0.000674, -1.22561, 32.04873, 15.27334),
+  prePupa = c(0.00181533, 3.963006, 33.04467, 4.317786),
+  pupaMF = c(0.000396921, 2.417172, 32.44556, 11.99131))
+row.names(devParams) <- c("a", "Tmin", "Tmax", "m")
+(devParams <- devParams %>% t)
+
+
+# Run forward prediction with input parameters using fwdDev()
+f3 <- fwdDev(tempObs = df,             # climate data frame  
+             devParamsDf = devParams,  # insect development parameters
+             startDate = "2015-03-01", # a string in yyyy-mm-dd format
+             startStage = "egg",       # a string matching one of row.names(devParams)
+             startDev = 0.5,             # a number between 0 (no dev) and 1 (dev completed)
+             gens = 3)                 # consecutive generations to model
+
+# Output as a summary of life stages (each generation is stored as a separate list element)
+f3_stages <- fwdDev(tempObs = df,     
+             devParamsDf = devParams,  
+             startDate = "2015-03-01", 
+             startStage = "egg",     
+             startDev = 0.5,             
+             gens = 3,
+             output = "stages")        # output as "stages" (default value is "increments")
+
+# Output as a summary of generations
+f3_gens <- fwdDev(tempObs = df,     
+             devParamsDf = devParams,  
+             startDate = "2015-03-01", 
+             startStage = "egg",     
+             startDev = 0.5,             
+             gens = 3,
+             output = "generations")   # output as "generations"
+
+# Viewing output ... for `increments` and `stages` output, each generation is stored as separate dfs in a list
+
+f3
+f3_stages
+f3_gens
+
+f3_stages_df <- bind_rows(f3_stages)  # to combine generations into a single dataframe 
+f3_stages_df
+
+View(bind_rows(f3))       # to view object a scrollable spreadsheet (if list, must bind_rows())
+
+# Run reverse predictions with input parameters using revDev()
+r10 <- revDev(tempObs = df,
+              devParamsDf = devParams,
+              startDate = "2015-03-01",
+              startStage = "pupaMF",
+              startDev = 0.75,
+              gens = 10,
+              output = "increments")
+
+r10_gens <- revDev(tempObs = df,
+              devParamsDf = devParams,
+              startDate = "2015-03-01",
+              startStage = "pupaMF",
+              startDev = 0.75,
+              gens = 10,
+              output = "generations")
+
+r10_gens
+
+# To check development curves, plot "increments" output
+
+# fwd ...
+ggplot(data = bind_rows(f3), aes(x = obs, y = dev)) + 
+  geom_point() +
+  facet_wrap(~stage)
+
+# rev...
+ggplot(data = bind_rows(r10), aes(x = obs, y = abs(dev))) + 
+  geom_point() +
+  facet_wrap(~stage)
+
+
+
+
+```
+
+## Running models for multiple locations simultaneously
+
+```{r Running multiple models, warning = FALSE}
+
+# Read in a data frame with parameters for each site stored in separate columns
+sitesDf <- read_excel("C:/UserData/Kym/PhD/Data/colonisation/2015-data/sitesDf2015.xlsx") %>% 
+  head() %>%
+  #mutate(startDate = as.character(startDate)) %>% # because the new version of R parses in datetimes!
+  mutate(startDev = 0.5) %>% # added dummy value here, but can be specified as a data column before reading in file
+  dplyr::select(site, station, startDate, startStage, startDev)
+
+sitesDf
+
+# Read all temperature time series data files into a list and name each df (list element) by th unique `station` ID
+# Important note: climate data for each site are extracted from dfList by matching the unique `station` ID.
+wd <- "C:/UserData/Kym/PhD/Data/climateData/halfHourlyStation2015/"
+dfs <- list.files(path = wd, pattern = ".txt") %>% 
+  paste0(wd, .) %>%
+  lapply(X = unique(sitesDf$station), FUN = grep, ., value = TRUE) %>% unlist # extract the station IDs
+dfList <- mclapply(dfs, read_csv) %>% mclapply(FUN = formatBOMstdata)
+names(dfList) <- lapply(X = dfList, FUN = function(x) {unique(x$station)})
+
+# Run reverse predictions for all sites
+mloc_r3 <- mlocDev(locsDf = sitesDf,
+                   tempObsDfList = dfList,
+                   devParamsDf = devParams,
+                   timedir = "rev",
+                   gens = 3,
+                   output = "increments")
+
+# ... output as stages summary
+mloc_r3_stages <- mlocDev(locsDf = sitesDf,
+                          tempObsDfList = dfList,
+                          devParamsDf = devParams,
+                          timedir = "rev",
+                          gens = 3,
+                          output = "stages")
+
+# ... output as generations summary
+mloc_r3_gens <- mlocDev(locsDf = sitesDf,
+                          tempObsDfList = dfList,
+                          devParamsDf = devParams,
+                          timedir = "rev",
+                          gens = 3,
+                          output = "generations")
+
+# Output is stored in a list with a separate output dataframe for each site 
+mloc_r3 
+mloc_r3_stages
+mloc_r3_gens
+
+# To combine output into a single dataframe ...
+bind_rows(mloc_r3_gens)
+
+
+```
+
+
+## Dealing with missing climate data 
+
+## Interpolating hourly temperatures from daily temperature data
+
+Phenological models commonly require hourly data measurements. Sometimes, hourly data are unavailable or strings of consecutive hours of temperature observations are missing from a time series. In this situation, models can be used to infer daily diurnal temperature curves from daily maximum and minimum temperature to generate estimated hourly observations.  
+
+```{r Interpolating hourly temperatures}
+
+# Read in daily maxmin temperature obseravtions for weather stations of interest.
+# GPS coordinates for each station are also required
+stationCrds <- read_csv(  "C:/UserData/Kym/PhD/Data/climateData/weatherStationCoords.csv")
+wd <- "C:/UserData/Kym/PhD/Data/climateData/dailyMaxMinStation2015/"
+
+mxpath <- list.files(path = wd, pattern = "_dmax.csv") %>%
+  paste0(wd, .)
+mnpath <- list.files(path = wd, pattern = "_dmin.csv") %>%
+  paste0(wd, .)
+
+# dmax files ...
+maxDf <- mclapply(mxpath, read_csv) %>%
+  lapply(., mutate,
+         date = as.Date(paste(Year, Month, Day, sep = "-"))) %>%
+  lapply(., dplyr::select,
+         station = contains("station"),
+         date,
+         max = contains("Maximum", ignore.case = FALSE)) %>%
+  bind_rows()
+
+# merge dmax and dmin files by location and date ...
+dailyDf <- mclapply(mnpath, read_csv) %>%
+  lapply(., mutate,
+         date = as.Date(paste(Year, Month, Day, sep = "-"))) %>%
+  lapply(., dplyr::select, station = contains("station"), date,
+         min = contains("Minimum", ignore.case = FALSE)) %>%
+  bind_rows() %>%
+  merge(maxDf, by = c("station", "date")) %>%
+  merge(stationCrds, ., by = "station") %>%
+  arrange(station, date)
+
+head(dailyDf)
+
+
+
+# First, calculate sunrise and sunset times for each location and date using DBMdevmode2::sunriset()
+dailyDf %<>% DBMdevmod2::msunriset()
+head(dailyDf)
+
+# Plot daylength ...
+ggplot(dailyDf, aes(x = date, y = daylength, colour = stationName)) + geom_line()
+
+# Plot sunrise and sunset times....
+# Note the effect of changes to summer time! On the `change` dates, there is an unexpected blip
+
+df2 <- dailyDf %>%
+  melt(id.vars = c("date","stationName"),
+       measure.vars = c("sunrise", "sunset"),
+       variable.name = "direction",
+       value.name = "suntimes")
+ggplot(df2, aes(x = date, y = hour(suntimes) + minute(suntimes)/60, colour = direction)) + 
+  geom_line() + 
+  facet_wrap(~stationName)
+
+# Now, interpolate hourly temperature
+hourlyDf <- DBMdevmod2::hourlyTemperatures(dailyDf)
+
+# Plot the entire dataset ...
+ggplot(hourlyDf, aes(x = datetime, y = obs)) +
+  geom_line() + 
+  facet_wrap(~station)
+
+# Plot one month of data ...
+dateSeq <- seq(as.Date("2014-01-01"), as.Date("2014-01-31"), by = "day")
+ggplot(filter(hourlyDf, lubridate::date(datetime) %in% dateSeq), 
+              aes(x = datetime, y = obs)) +
+  geom_line() + 
+  facet_wrap(~station)
+
+# Plot one week of data
+dateSeq2 <- seq(as.Date("2014-01-01"), as.Date("2014-01-08"), by = "day")
+ggplot(filter(hourlyDf, lubridate::date(datetime) %in% dateSeq2), 
+       aes(x = datetime, y = obs)) +
+  geom_line() + 
+  facet_wrap(~station)
+
+# Compare against real data ...
+
+wd <- "C:/UserData/Kym/PhD/Data/climateData/halfHourlyStation2015/"
+dfs <- list.files(path = wd, pattern = "+.txt") %>% 
+  paste0(wd, .)
+dfList <- mclapply(dfs, read_csv) %>% 
+  mclapply(., formatBOMstdata)
+
+ggplot(hourlyDf %>% filter(lubridate::date(datetime) %in% dateSeq2), 
+       aes(x = datetime, y = obs)) +
+  geom_line(linetype = "dashed", size = 1, colour = "blue") +
+  geom_line(data = bind_rows(dfList) %>% 
+              filter(lubridate::date(datetime) %in% dateSeq2), 
+            aes(x = datetime, y = obs),
+            size = 0.75, colour = "orange", alpha = 0.75) +
+  facet_wrap(~station)
+
+# END
+
+```
+
+
+
