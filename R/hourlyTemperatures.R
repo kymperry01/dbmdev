@@ -8,8 +8,8 @@
 #' which conveniently handles \code{data.frames} with multiple dates and locations.
 #'
 #' @param df A \code{data.frame} containing columns called `station` (a unique character
-#' string or numeric location or weather station identifier), `date` in \code{as.Date()}
-#' format, `min` and `max` (numeric daily temperatures), `sunrise` and `sunset`
+#' string or numeric location or weather station identifier), `date` in \code{as.Date}
+#' or \code{as.POSIXct} format, `min` and `max` (numeric daily temperatures), `sunrise` and `sunset`
 #' (datetimes in POSIXct format).
 #' @return A dataframe with the variables `station`, `datetime` in as.POSIXct format, and
 #' the interpolated hourly `obs`.
@@ -48,8 +48,16 @@
 #' @export
 hourlyTemperatures <- function(df) {
 
+  # error checks
+  # ... check that there are no duplicated dates in the daily df
+  if (anyDuplicated(df$date) > 0) {
+    stop("There are duplicated dates in the input dataframe. \n
+         Each row should contain temperature observations for a unique date")
+  }
+
   # add vars for model inputs (Cesaraccio 2001)
   df %<>%
+    mutate(date = as.Date(date)) %>%
     dplyr::rename(Tn = min, # Tmin current day
                   Tx = max) %>% # Tmax current day
     dplyr::mutate(Tp = dplyr::lead(Tn, n = 1), # Tmin nxt day
@@ -99,7 +107,8 @@ hourlyTemperatures <- function(df) {
 
   dplyr::bind_rows(tmpDf1, tmpDf2) %>%
     dplyr::mutate(
-      datetime = lubridate::ymd_h(paste(date, hour, sep = "-"))) %>%
+      datetime = lubridate::ymd_h(paste(date, hour, sep = "-"))
+      ) %>%
     dplyr::select(station, datetime, obs) %>%
     dplyr::arrange(station, datetime)
 

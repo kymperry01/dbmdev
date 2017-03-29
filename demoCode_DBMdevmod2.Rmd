@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE,
 
 # clear workspace, load packages
 
-rm(list = ls())
+#rm(list = ls())
 library(DBMdevmod2)
 library(dplyr)
 library(magrittr)

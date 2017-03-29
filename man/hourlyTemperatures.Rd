@@ -8,8 +8,8 @@ hourlyTemperatures(df)
 }
 \arguments{
 \item{df}{A \code{data.frame} containing columns called `station` (a unique character
-string or numeric location or weather station identifier), `date` in \code{as.Date()}
-format, `min` and `max` (numeric daily temperatures), `sunrise` and `sunset`
+string or numeric location or weather station identifier), `date` in \code{as.Date}
+or \code{as.POSIXct} format, `min` and `max` (numeric daily temperatures), `sunrise` and `sunset`
 (datetimes in POSIXct format).}
 }
 \value{

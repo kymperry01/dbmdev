@@ -79,39 +79,83 @@
 #'
 #' @export
 mlocDev <- function(locsDf, tempObsDfList, devParamsDf, timedir = "fwd",
-                        gens = 1, timeInt = 60, output = "increments", ...) {
+                    gens = 1, timeInt = 60, output = "increments", ...) {
 
-  # set function to call based on time direction
-  if (timedir == "fwd"){
-    model <- DBMdevmod2::fwdDev
-  } else {
-      if (timedir =="rev") {
-        model <- DBMdevmod2::revDev
-      } else {
-        stop("Invalid `timedir` argument")
-      }
+  # error checks
+  # ... check for unique sites in each row
+  if (anyDuplicated(locsDf$site) > 0) {
+    stop("There are duplicated values in the `site` variable in locsDf. \n
+         Each row should contain the model inputs for a unique site location")
   }
 
-  # wrapper function to fwdDev/revDev for indexing over site names with lapply
-    f <- function(nm, ...) {
-      loc <- filter(locsDf, site == nm)
-      dev <- model(tempObsDf = tempObsDfList[[as.character(loc$station)]],
-                   devParamsDf = devParamsDf,
-                   startDate = loc$startDate,
-                   startStage = loc$startStage,
-                   startDev = loc$startDev,
-                   gens = gens,
-                   output = outf) %>%
-        bind_rows()
-      s <- data_frame(site = rep(loc$site, nrow(dev)))
-      bind_cols(s, dev)
-    }
+  # ... check all `station` values in locsDf are matched with climate dataframes
+  statNAs <- sum(!locsDf$station %in% names(tempObsDfList))
+  if (statNAs > 0) {
+    stop(paste(statNAs, "values for `locsDf$station` do not match the names \n
+               of temperature data.frames in tempObsDfList"))
+  }
 
-    outf <- output
-    dev <- lapply(locsDf$site, f)
-    names(dev) <- locsDf$site
-    dev
+  # set development model for specified time direction
+  stopifnot(timedir %in% c("fwd", "rev"))
+  if (timedir == "fwd") {dev <- DBMdevmod2::fwdDev}
+  if (timedir == "rev") {dev <- DBMdevmod2::revDev}
 
-   # error check for time series data frames exist for all sites.
+  # run the model for each site
+  spl <- split(locsDf, locsDf$site)
+  res <- lapply(spl, function(x){
+
+    df <- tempObsDfList[[as.character(x$station)]]
+    out <- dev(tempObsDf = df,
+               devParamsDf = devParamsDf,
+               startDate = as.character(as.Date(x$startDate)),
+               startStage = x$startStage,
+               startDev = x$startDev,
+               gens = gens,
+               output = output) %>%
+      bind_rows()
+
+    site <- data.frame(site = rep(x$site, nrow(out)))
+    bind_cols(site, out)
+
+  })
+  res
 }
 
+# # Original version below...
+# mlocDev <- function(locsDf, tempObsDfList, devParamsDf, timedir = "fwd",
+#                         gens = 1, timeInt = 60, output = "increments", ...) {
+#
+#   # set function to call based on time direction
+#   if (timedir == "fwd"){
+#     model <- DBMdevmod2::fwdDev
+#   } else {
+#       if (timedir =="rev") {
+#         model <- DBMdevmod2::revDev
+#       } else {
+#         stop("Invalid `timedir` argument")
+#       }
+#   }
+#
+#   # wrapper function to fwdDev/revDev for indexing over site names with lapply
+#     f <- function(nm, ...) {
+#       loc <- filter(locsDf, site == nm)
+#       dev <- model(tempObsDf = tempObsDfList[[as.character(loc$station)]],
+#                    devParamsDf = devParamsDf,
+#                    startDate = loc$startDate,
+#                    startStage = loc$startStage,
+#                    startDev = loc$startDev,
+#                    gens = gens,
+#                    output = outf) %>%
+#         bind_rows()
+#       s <- data_frame(site = rep(loc$site, nrow(dev)))
+#       bind_cols(s, dev)
+#     }
+#
+#     outf <- output
+#     dev <- lapply(locsDf$site, f)
+#     names(dev) <- locsDf$site
+#     dev
+#
+#    # error check for time series data frames exist for all sites.
+# }
+#

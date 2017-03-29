@@ -1,0 +1,13 @@
+# #################################
+# Jobs list for package DBMdevmod2
+# K. Perry 30/3/2017
+# ###################
+
+# Tasks to improve the package
+# 1. devParamsDf is actually a matrix, but function works with both. Correct, or update documentation
+#
+
+
+# Potential bug notes/fixes
+# 1. mlocDev: "stages" outout does not work properly (outputs in listed format) is cbind is used in the last code line instead of bind_cols.
+# 2. mlocDev, new version of function, 'bind_rows' step to view together gives warnig 'unequal factor varibales, coercing to character). 
