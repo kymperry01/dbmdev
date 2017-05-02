@@ -11,3 +11,16 @@
 # Potential bug notes/fixes
 # 1. mlocDev: "stages" outout does not work properly (outputs in listed format) is cbind is used in the last code line instead of bind_cols.
 # 2. mlocDev, new version of function, 'bind_rows' step to view together gives warnig 'unequal factor varibales, coercing to character). 
+# 3. mlocDev/RevDev/FwdDev: it would be convenient to give option (argument) when to bind the results to the full original dataframe, 
+# ... instead of simply outputting columns in a df, which then need to be merged by `site` with original df. 
+# ... build inside fwdDev and revDev.
+# 4. choice to output as list (as per current, with each gen in a separate df) or as single dataframe (simply add bindrows step inside function)
+# 5. choice to output generations in `long` or `wide` format. For wide, call the below function inside main functions:
+castGens <- function(x){ # x if a df. see R script `autumnClimate.R`.
+  x %>%
+    mutate(gen = paste0("dev0G", gen)) %>%
+    dcast(site ~ gen, value.var = c("dev0")) %>%
+    # parse the numeric datetimes back to POSIXct (coerces to matrix)
+    mutate_each_(funs(as.POSIXct(., origin = "1970-01-01")),
+                 vars = list(quote(-c(site))))
+  }

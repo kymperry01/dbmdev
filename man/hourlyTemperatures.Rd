@@ -53,4 +53,3 @@ ggplot(hourly \%>\% filter(!is.na(obs)), aes(x = datetime, y = obs)) +
 Cesaraccio, Carla, et al. "An improved model for determining degree-day values from
 daily temperature data." International journal of biometeorology 45.4 (2001): 161-169.
 }
-

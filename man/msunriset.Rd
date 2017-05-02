@@ -69,4 +69,3 @@ NOAA solar calculator: http://www.esrl.noaa.gov/gmd/grad/solcalc/sunrise.html
 \seealso{
 \code{\link{maptools::sunriset()}}
 }
-

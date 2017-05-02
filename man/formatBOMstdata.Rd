@@ -25,4 +25,3 @@ observations in the format provided by the Australian Bureau of Meterology
 climate data online service. It formats columns and aggregates data to hourly
 observations.
 }
-

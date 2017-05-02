@@ -4,13 +4,13 @@
 \alias{mlocDev}
 \title{Predict temperature-based development of diamondback moth for multiple locations}
 \usage{
-mlocDev(locsDf, tempObsDfList, devParamsDf, timedir = "fwd", gens = 1,
-  timeInt = 60, output = "increments", ...)
+mlocDev(locsDf, tempObsDfList, devParamsDf, timedir = "fwd", timeInt = 60,
+  output = "increments", ...)
 }
 \arguments{
 \item{locsDf}{A \code{data.frame} with the parameters for each location. For each location,
 the parameters must be held in separate variables named `site`, `station` (temperature data
-series identifier), `startDate`, `startStage` and `startDev`. Each location corresponds to
+series identifier), `startDate`, `startStage`, `startDev` and `gens`. Each location corresponds to
 a df row. see \code{\link{fwdDev}} and \code{\link{revDev}}.}
 
 \item{tempObsDfList}{A list of temperature time series \code{data.frames} for all
@@ -24,8 +24,6 @@ with the parameters for each lifestage on separate rows, with row names as chara
 
 \item{timedir}{The direction in time for modelling, as a character string. If timedir = "fwd",
 \code{\link{fwdDev}} is called; if timedir = "rev", \code{\link{revDev}} is called.}
-
-\item{gens}{The number of consecutive generations to run the model.}
 
 \item{timeInt}{The time interval of increments in minutes. Th default value = 12.
 The model has not yet been tested with other time intervals.}
@@ -58,9 +56,9 @@ library(dplyr)
 # make an example siteslist with details (function arguments) for 2 sites
 # note, names(sitelist) must be a character string matching the site name for each element (df)
  site1 <- data_frame(station = 18012, site = "site1",
-                     startDate = "2014-11-01", startStage = "st3", startDev = 0.5)
+                     startDate = "2014-11-01", startStage = "st3", startDev = 0.5, gens = 2)
  site2 <- data_frame(station = 26100, site = "site2", startDate = "2014-11-15",
-                     startStage = "st3", startDev = 0.75)
+                     startStage = "st3", startDev = 0.75, gens = 2)
  sitesDf <- bind_rows(site1, site2)
 
  # create an example list of two dataframes with hourly temperature observations for two sites.
@@ -83,15 +81,14 @@ library(dplyr)
 
  # Back-predict development and output all increments
  rdev <- mlocDev(locsDf = sitesDf, tempObsDfList = dfList, devParamsDf = devParams,
-             timedir = "rev", gens = 2)
+             timedir = "rev")
 
  # With output as summary of lifestages
  rstages <- mlocDev(locsDf = sitesDf, tempObsDfList = dfList, devParamsDf = devParams,
-             timedir = "rev", gens = 2, output = "stages")
+             timedir = "rev", output = "stages")
 
  # With output as summary of generations
  rgens <-  mlocDev(locsDf = sitesDf, tempObsDfList = dfList, devParamsDf = devParams,
-             timedir = "rev", gens = 2, output = "generations")
+             timedir = "rev", output = "generations")
 
 }
-

@@ -66,4 +66,3 @@ Briere, Jean-Francois, et al. (1999) A novel rate model of temperature-dependent
 \seealso{
 \code{\link{fwdDev}}.
 }
-

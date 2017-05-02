@@ -96,4 +96,3 @@ URL ftp://cran.r-project.org/doc/Rnews/Rnews_2005-1.pdf.
 Briere, Jean-Francois, et al. (1999) A novel rate model of
 temperature-dependent development for arthropods. Environmental Entomology 28.1: 22-29.
 }
-
