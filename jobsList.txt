@@ -1,5 +1,5 @@
 # #################################
-# Jobs list for package DBMdevmod2
+# Jobs list for package dbmdev
 # K. Perry 30/3/2017
 # ###################
 
@@ -24,3 +24,18 @@ castGens <- function(x){ # x if a df. see R script `autumnClimate.R`.
     mutate_each_(funs(as.POSIXct(., origin = "1970-01-01")),
                  vars = list(quote(-c(site))))
   }
+
+  
+# For `total` lifecycle, calculating cumulative deveopment should come standard in the output.
+# Specifying start or end date should be an option (to calculate cumdev between a specific time window).
+  
+  
+# Should be able to run all sorts of startDev at once and get a separate column output for each! Fix!!
+# you want the same data_frame returned with an extra column added with the predicted output!
+# You at least need the startDate returned! (you do, it is called dev0. But that's misleading, because the first stage might have been dev0.5? Call it startDev?)
+# need to handle the warnings when binding rows (coercing factor to character) - add stringsAsFactors = FALSE somewhere earlier. warning caused by last step in mlocDev function
+# dev0 and dev1 is confusing ... which way round depends on whether fwd or reverse modelling!
+# you need better error message when biofix (startDate or startDev) is missing (NA). Or skip these rows.
+# timedir is a stupid name for an argument. should be `direction`
+# you need better, more intuitive package and function names.
+# it just `has` to keep all the columns from the input data.frame! It is the group_by %>% summarise steps inside fwdDev etc that are the problem.

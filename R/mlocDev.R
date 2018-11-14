@@ -96,8 +96,8 @@ mlocDev <- function(locsDf, tempObsDfList, devParamsDf, timedir = "fwd",
 
   # set development model for specified time direction
   stopifnot(timedir %in% c("fwd", "rev"))
-  if (timedir == "fwd") {dev <- DBMdevmod2::fwdDev}
-  if (timedir == "rev") {dev <- DBMdevmod2::revDev}
+  if (timedir == "fwd") {dev <- dbmdev::fwdDev}
+  if (timedir == "rev") {dev <- dbmdev::revDev}
 
   # run the model for each site
   spl <- split(locsDf, locsDf$site)

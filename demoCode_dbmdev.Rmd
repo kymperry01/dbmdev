@@ -1,5 +1,5 @@
 ---
-title: "demoCode_DBMdevmod2"
+title: "demoCode_dbmdev"
 author: "Kym D Perry"
 date: "13 October 2016"
 output: html_document
@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE,
 # clear workspace, load packages
 
 #rm(list = ls())
-library(DBMdevmod2)
+library(dbmdev)
 library(dplyr)
 library(magrittr)
 library(readr)
@@ -26,9 +26,9 @@ library(ggplot2)
 
 ```
 
-## Running phenological models for diamondback moth using custom R package DBMdevmod2
+## Running phenological models for diamondback moth using custom R package dbmdev
 
-This document demonstrates how to run Briere's temperature-based model to predict the development rate of diamondback moth, Plutella xylostella, using custom R package DBMdevmod2.
+This document demonstrates how to run Briere's temperature-based model to predict the development rate of diamondback moth, Plutella xylostella, using custom R package dbmdev.
 
 Package authors: Kym. D. Perry, Stephen M. Pederson, Michael A. Keller
 Version date: October 2016
@@ -47,7 +47,7 @@ df <- read_csv(
 head(df) # the raw df
 
 # Format and aggregate into hourly observations
-df %<>% DBMdevmod2::formatBOMstdata()
+df %<>% dbmdev::formatBOMstdata()
 head(df) # the formatted df
 
 # Create a data.frame with the DBM development parameters required for Briere's model
@@ -238,7 +238,7 @@ head(dailyDf)
 
 
 # First, calculate sunrise and sunset times for each location and date using DBMdevmode2::sunriset()
-dailyDf %<>% DBMdevmod2::msunriset()
+dailyDf %<>% dbmdev::msunriset()
 head(dailyDf)
 
 # Plot daylength ...
@@ -257,7 +257,7 @@ ggplot(df2, aes(x = date, y = hour(suntimes) + minute(suntimes)/60, colour = dir
   facet_wrap(~stationName)
 
 # Now, interpolate hourly temperature
-hourlyDf <- DBMdevmod2::hourlyTemperatures(dailyDf)
+hourlyDf <- dbmdev::hourlyTemperatures(dailyDf)
 
 # Plot the entire dataset ...
 ggplot(hourlyDf, aes(x = datetime, y = obs)) +

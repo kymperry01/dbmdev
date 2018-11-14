@@ -4,8 +4,8 @@
 \alias{mlocDev}
 \title{Predict temperature-based development of diamondback moth for multiple locations}
 \usage{
-mlocDev(locsDf, tempObsDfList, devParamsDf, timedir = "fwd", timeInt = 60,
-  output = "increments", ...)
+mlocDev(locsDf, tempObsDfList, devParamsDf, timedir = "fwd",
+  timeInt = 60, output = "increments", ...)
 }
 \arguments{
 \item{locsDf}{A \code{data.frame} with the parameters for each location. For each location,

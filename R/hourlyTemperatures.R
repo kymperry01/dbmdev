@@ -4,7 +4,7 @@
 #' temperatures from daily maximum and minimum temperatures.
 #' @details Uses two sine functions and a square root function to estimate the hourly
 #' temperatures for three periods of each day. Sunrise and sunset times required
-#' for the model can be calculated using \code{\link{DBMdevmod2::msunriset()}}
+#' for the model can be calculated using \code{\link{dbmdev::msunriset()}}
 #' which conveniently handles \code{data.frames} with multiple dates and locations.
 #'
 #' @param df A \code{data.frame} containing columns called `station` (a unique character
@@ -36,7 +36,7 @@
 #'                  date = dates,
 #'                  min = rnorm(n = length(dates), mean = 12, sd = 1),
 #'                  max = min + runif(1, min = 6, max = 10)) %>%
-#'               DBMdevmod2::msunriset()
+#'               dbmdev::msunriset()
 #'
 #' # estimate hourly temperatures
 #' # note, `obs` for the last date in the sequence will contain a string of NAs
