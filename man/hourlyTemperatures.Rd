@@ -7,14 +7,14 @@
 hourlyTemperatures(df)
 }
 \arguments{
-\item{df}{A \code{data.frame} containing columns called `station` (a unique character
-string or numeric location or weather station identifier), `date` in \code{as.Date}
-or \code{as.POSIXct} format, `min` and `max` (numeric daily temperatures), `sunrise` and `sunset`
+\item{df}{A \code{data.frame} containing columns called \code{station} (a unique character
+string or numeric location or weather station identifier), \code{date} in \code{as.Date}
+or \code{as.POSIXct} format, \code{min} and \code{max} (numeric daily temperatures), \code{sunrise} and \code{sunset}
 (datetimes in POSIXct format).}
 }
 \value{
-A dataframe with the variables `station`, `datetime` in as.POSIXct format, and
-the interpolated hourly `obs`.
+A dataframe with the variables \code{station}, \code{datetime} in as.POSIXct format, and
+the interpolated hourly \code{obs}.
 }
 \description{
 Implements Cesaraccio's model (see refs) for interpolating hourly

@@ -8,23 +8,23 @@ dates.}
 msunriset(df)
 }
 \arguments{
-\item{df}{A \code{data.frame} with columns named `date` (`as.Date` or
-`as.POSIXct`), `latitude` and `longitude` in decimal degrees.}
+\item{df}{A \code{data.frame} with columns named \code{date} (\code{as.Date} or
+\code{as.POSIXct}), \code{latitude} and \code{longitude} in decimal degrees.}
 }
 \value{
-The original \code{data.frame} with added columns for `sunrise`,
-`sunset`, and `daylength` in numeric hours.
+The original \code{data.frame} with added columns for \code{sunrise},
+\code{sunset}, and \code{daylength} in numeric hours.
 }
 \description{
 A convenient wrapper for \code{\link{maptools::sunriset()}} that takes
 a \code{dataframe} with multiple dates and locations and outputs sunrise and sunset time
-in `POSIXct` format and daylength in numeric hours.
+in \code{POSIXct} format and daylength in numeric hours.
 }
 \details{
 Maptools::sunriset uses the original algorithm from the NOAA solar calculator.
 }
 \note{
-Option to output the maptools `day_frac` format, specify timezones and change the CRS
+Option to output the maptools \code{day_frac} format, specify timezones and change the CRS
 data projection can be added if it becomes necessary. Note, CHANGES TO SUMMER TIME STILL NEED
 TO BE ADDRESSED.
 }

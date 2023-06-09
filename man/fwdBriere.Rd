@@ -9,7 +9,7 @@ fwdBriere(df, a, Tmin, Tmax, m, timeInt = 60)
 }
 \arguments{
 \item{df}{A \code{data.frame} containing observed temperatures in a variable called
-`obs`, and the 'datetimes' in POSIXct format.}
+\code{obs}, and the 'datetimes' in POSIXct format.}
 
 \item{a}{A constant from the Briere model.}
 
@@ -23,9 +23,9 @@ fwdBriere(df, a, Tmin, Tmax, m, timeInt = 60)
 The default value is 60.}
 }
 \value{
-The original \code{data.frame} with the added columns `dev` (proportional
-development for each increment) and `totalDev` (cumulative porportional development).
-The returned data.frame will only contain the rows/timepoints where `TotalDev` < 1.
+The original \code{data.frame} with the added columns \code{dev} (proportional
+development for each increment) and \code{totalDev} (cumulative porportional development).
+The returned data.frame will only contain the rows/timepoints where \code{TotalDev} < 1.
 }
 \description{
 Predicts forward-in-time temperature-dependent development for an
@@ -36,7 +36,7 @@ and DBM development parameters.
 Implements Briere's temperature-dependent insect development model,
 equation 2 (Briere 1999) forward-in-time. A separate analagous function, \code{\link{revBriere}},
 implements the model reverse-in-time. Outputs DBM development for each time increment
-as a proportion from `0` (no development) to `1` (completed development) for the
+as a proportion from \code{0} (no development) to \code{1} (completed development) for the
 lifestage. These functions are the workhorses containing Briere's model; they are designed
 to be called inside other functions that allow the user to control starting parameters
 (starting date, lifestage etc). See \code{\link{fwdDev()}}.
