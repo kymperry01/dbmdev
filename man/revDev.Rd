@@ -5,17 +5,27 @@
 \title{Predict reverse temperature-based development of diamondback moth
 over multiple lifestages and generations based on supplied parameters}
 \usage{
-revDev(tempObsDf, devParamsDf, startDate, startTime = 12, startStage,
-  startDev, gens, output = "increments", timeInt = 60, ...)
+revDev(
+  tempObsDf,
+  devParamsDf,
+  startDate,
+  startTime = 12,
+  startStage,
+  startDev,
+  gens,
+  output = "increments",
+  timeInt = 60,
+  ...
+)
 }
 \arguments{
 \item{tempObsDf}{A dataframe containing temperature observations at specified time intervals
-in a variable named `obs`, and POSIXct datetimes in a variable named `datetime`.}
+in a variable named \code{obs}, and POSIXct datetimes in a variable named \code{datetime}.}
 
 \item{devParamsDf}{A dataframe containing the four insect development parameters required for
-Briere's model. The parameters `a`, `Tmin`, `Tmax` and `m` are held as separate variables with
+Briere's model. The parameters \code{a}, \code{Tmin}, \code{Tmax} and \code{m} are held as separate variables with
 the parameters for each lifestage on separate rows, with row names as character strings
-corresponding to each lifestage (when modelling, the user input for `startStage` must match these).}
+corresponding to each lifestage (when modelling, the user input for \code{startStage} must match these).}
 
 \item{startDate}{The starting date for the model as a character string in "yyyy-mm-dd" format.}
 
@@ -25,7 +35,7 @@ The default value is 12 (midday). The model has not yet been tested using other 
 \item{startStage}{The starting lifestage as a character string. Must match one of
 \code{rownames(devParamsDf)}.}
 
-\item{startDev}{The starting cumulative development point for `startStage` as a proportion
+\item{startDev}{The starting cumulative development point for \code{startStage} as a proportion
 from 0 to 1.}
 
 \item{gens}{The number of consecutive generations to run the model.}
@@ -40,7 +50,7 @@ The model has not yet been tested with other time intervals.}
 }
 \value{
 A list. Each element will be a subset of the original \code{data.frame} with
-the added columns `dev`, `totalDev`, `stage` and `gen`, and containing only the rows/timepoints
+the added columns \code{dev}, \code{totalDev}, \code{stage} and \code{gen}, and containing only the rows/timepoints
 for a single generation. To combine output into a single \code{\link{dataframe}}, use \code{\link{dplyr::bind_rows}}.
 }
 \description{
@@ -51,12 +61,12 @@ analagous function, \code{\link{fwdDev}}, predicts reverse-in-time development.
 \details{
 Implements Briere's temperature-dependent insect development model,
 equation 2 (Briere 1999) reverse-in-time. Outputs DBM development for each time
-increment as a proportion from `0` (no development) to `1` (completed development) for
+increment as a proportion from \code{0} (no development) to \code{1} (completed development) for
 individual lifestages consecutively over multiple lifestages and generations.
 }
 \note{
-The function has not yet been tested with `startTime` other than 12
-or `timeInt` other than 60. Recommend not to vary these until tested.
+The function has not yet been tested with \code{startTime} other than 12
+or \code{timeInt} other than 60. Recommend not to vary these until tested.
 }
 \examples{
 library(lubridate)

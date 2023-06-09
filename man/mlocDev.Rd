@@ -4,22 +4,29 @@
 \alias{mlocDev}
 \title{Predict temperature-based development of diamondback moth for multiple locations}
 \usage{
-mlocDev(locsDf, tempObsDfList, devParamsDf, timedir = "fwd",
-  timeInt = 60, output = "increments", ...)
+mlocDev(
+  locsDf,
+  tempObsDfList,
+  devParamsDf,
+  timedir = "fwd",
+  timeInt = 60,
+  output = "increments",
+  ...
+)
 }
 \arguments{
 \item{locsDf}{A \code{data.frame} with the parameters for each location. For each location,
-the parameters must be held in separate variables named `site`, `station` (temperature data
-series identifier), `startDate`, `startStage`, `startDev` and `gens`. Each location corresponds to
+the parameters must be held in separate variables named \code{site}, \code{station} (temperature data
+series identifier), \code{startDate}, \code{startStage}, \code{startDev} and \code{gens}. Each location corresponds to
 a df row. see \code{\link{fwdDev}} and \code{\link{revDev}}.}
 
 \item{tempObsDfList}{A list of temperature time series \code{data.frames} for all
-locations. The time series data should contain columns named `station` (time series data
-identifier such as a weather station code), `datetime` (POSIX date/times) and `obs` (
+locations. The time series data should contain columns named \code{station} (time series data
+identifier such as a weather station code), \code{datetime} (POSIX date/times) and \code{obs} (
 temperature observations). See \code{\link{formatBOMstdata}} for details.}
 
 \item{devParamsDf}{A dataframe containing the four insect development parameters for
-Briere's model. The parameters `a`, `Tmin`, `Tmax` and `m` are held as separate variables
+Briere's model. The parameters \code{a}, \code{Tmin}, \code{Tmax} and \code{m} are held as separate variables
 with the parameters for each lifestage on separate rows, with row names as character strings.}
 
 \item{timedir}{The direction in time for modelling, as a character string. If timedir = "fwd",

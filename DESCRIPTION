@@ -1,10 +1,26 @@
 Package: dbmdev
-Type: Package
 Title: Predict incremental temperature-based development of diamondback moth
-Version: 2.0
-Author: Kym D. Perry, Stephen M. Pederson
-Maintainer: Kym Perry <kym.perry@sa.gov.au>
-Description: Version 2 has more user friendly function names and options
-License: NA
+Version: 2.0.0
+Authors@R:
+    c(person(given = "Kym",
+             family = "Perry",
+             role = c("aut", "cre"),
+             email = "kym.perry@sa.gov.au",
+             comment = c(ORCID = "YOUR-ORCID-ID")),
+      person(given = "Stephen M.",
+             family = "Pederson",
+             role = "ctb"))
+Description: What the package does (one paragraph).
+Imports: 
+    dplyr,
+    lubridate,
+    magrittr,
+    maptools,
+    parallel,
+    sp
+License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+    license
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
 LazyData: TRUE
-RoxygenNote: 6.1.1
+RoxygenNote: 7.2.3

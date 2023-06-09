@@ -15,8 +15,8 @@ climate data online service.}
 60 (Currently, this function will only aggregate data to this time interval).}
 }
 \value{
-A reformatted \code{data.frame} with three columns, `station` (numeric
-weather station code), `datetime` in POSIXct format, and `obs` (hourly temperature
+A reformatted \code{data.frame} with three columns, \code{station} (numeric
+weather station code), \code{datetime} in POSIXct format, and \code{obs} (hourly temperature
 observations).
 }
 \description{
