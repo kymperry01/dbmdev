@@ -62,9 +62,9 @@ library(lubridate)
 library(dplyr)
 # make an example siteslist with details (function arguments) for 2 sites
 # note, names(sitelist) must be a character string matching the site name for each element (df)
- site1 <- data_frame(station = 18012, site = "site1",
+ site1 <- tibble(station = 18012, site = "site1",
                      startDate = "2014-11-01", startStage = "st3", startDev = 0.5, gens = 2)
- site2 <- data_frame(station = 26100, site = "site2", startDate = "2014-11-15",
+ site2 <- tibble(station = 26100, site = "site2", startDate = "2014-11-15",
                      startStage = "st3", startDev = 0.75, gens = 2)
  sitesDf <- bind_rows(site1, site2)
 

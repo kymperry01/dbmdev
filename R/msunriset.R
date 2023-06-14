@@ -56,6 +56,7 @@
 #' @importFrom sp SpatialPoints CRS
 #' @import dplyr
 #' @importFrom magrittr %<>% extract2
+#' @importFrom tibble as_tibble
 #'
 #' @export
 msunriset <- function(df) {
@@ -75,7 +76,7 @@ msunriset <- function(df) {
       ) %>%
       extract2("time"),
     daylength = as.numeric(sunset - sunrise)) %>%
-    as_data_frame()
+    tibble::as_tibble()
 }
 
 

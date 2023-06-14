@@ -33,7 +33,7 @@ library(ggplot2)
 # create a dataframe with daily max and minimum temperatures for one week
 # include latitude, longitude here for calculation of required sunrise/set times
 dates <- seq(as.Date("2016-03-01"), as.Date("2016-03-08"), by = "day")
-df <- data_frame(station = "loc1",
+df <- tibble(station = "loc1",
                  latitude = -31.141980,
                  longitude = 138.395350,
                  date = dates,
