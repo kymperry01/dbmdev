@@ -85,14 +85,17 @@ devParams <- data.frame(st1 = c(0.0003592, 1.754, 35.08, 4.347),
  devParams <- t.data.frame(devParams)
 
 # Back-predict development over 2 generations
-rdev <- revDev(tempObsDf = df, devParams, startDate = "2014-09-01", startStage = "st3", startDev = 0.5, gens = 2)
+rdev <- revDev(tempObsDf = df, devParams, startDate = "2014-09-01",
+startStage = "st3", startDev = 0.5, gens = 2)
 rdev
 
 # With stages summary output
-rstages <- revDev(tempObsDf = df, devParams, startDate = "2014-09-01", startStage = "st3", startDev = 0.5, gens = 2, output = "stages")
+rstages <- revDev(tempObsDf = df, devParams, startDate = "2014-09-01",
+startStage = "st3", startDev = 0.5, gens = 2, output = "stages")
 
 # With generations summary output
-rgens <- revDev(tempObsDf = df, devParams, startDate = "2014-09-01", startStage = "st3", startDev = 0.5, gens = 2, output = "generations")
+rgens <- revDev(tempObsDf = df, devParams, startDate = "2014-09-01",
+startStage = "st3", startDev = 0.5, gens = 2, output = "generations")
 
 
 }

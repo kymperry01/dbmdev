@@ -56,7 +56,8 @@ measure.vars = c("sunrise", "sunset"),
 variable.name = "direction",
 value.name = "suntimes")
 
-ggplot(df3, aes(x = date, y = hour(suntimes) + minute(suntimes)/60, colour = direction)) + geom_line()
+ggplot(df3, aes(x = date, y = hour(suntimes) + minute(suntimes)/60,
+colour = direction)) + geom_line()
 
 }
 \references{

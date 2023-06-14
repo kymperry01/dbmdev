@@ -86,15 +86,18 @@ devParams <- data.frame(st1 = c(0.0003592, 1.754, 35.08, 4.347),
  devParams <- t.data.frame(devParams)
 
 # Predict development over 2 generations
-dev <- fwdDev(tempObsDf = df, devParams, startDate = "2014-06-07", startStage = "st1", startDev = 0.5, gens = 2)
+dev <- fwdDev(tempObsDf = df, devParams, startDate = "2014-06-07",
+startStage = "st1", startDev = 0.5, gens = 2)
 dev
 tail(dev$g1)
 
 # With stages summary output
-stages <- fwdDev(tempObsDf = df, devParams, startDate = "2014-06-07", startStage = "st1", startDev = 0.5, gens = 2, output = "stages")
+stages <- fwdDev(tempObsDf = df, devParams, startDate = "2014-06-07",
+startStage = "st1", startDev = 0.5, gens = 2, output = "stages")
 
 # With generations summary output
-gens <- fwdDev(tempObsDf = df, devParams, startDate = "2014-06-07", startStage = "st1", startDev = 0.5, gens = 2, output = "generations")
+gens <- fwdDev(tempObsDf = df, devParams, startDate = "2014-06-07",
+startStage = "st1", startDev = 0.5, gens = 2, output = "generations")
 
 
 }
