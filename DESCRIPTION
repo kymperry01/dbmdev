@@ -18,6 +18,9 @@ Imports:
     maptools,
     parallel,
     sp
+Suggests: 
+    ggplot2,
+    reshape2
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
     license
 Encoding: UTF-8
