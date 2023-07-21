@@ -6,7 +6,7 @@
 \alias{dbmdev-package}
 \title{dbmdev: Predict incremental temperature-based development of diamondback moth}
 \description{
-What the package does (one paragraph).
+What the package does (one paragraph)
 }
 \author{
 \strong{Maintainer}: Kym Perry \email{kym.perry@sa.gov.au} (\href{https://orcid.org/YOUR-ORCID-ID}{ORCID})
