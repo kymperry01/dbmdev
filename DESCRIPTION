@@ -10,7 +10,7 @@ Authors@R:
       person(given = "Stephen M.",
              family = "Pederson",
              role = "ctb"))
-Description: What the package does (one paragraph).
+Description: What the package does (one paragraph)
 Imports: 
     dplyr,
     tibble,
