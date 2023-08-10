@@ -23,8 +23,6 @@
 #' @param direction Either "forward" or "back" in time.
 #'
 #' @import dplyr
-#' @import tidyverse
-#' @imoprt magrittr # this is for the dev_params object. Rm this dependency
 #'
 #' @references Briere, Jean-Francois, et al. (1999) A novel rate model of temperature-dependent development for arthropods. Environmental Entomology 28.1: 22-29.
 #'
@@ -41,9 +39,9 @@
 #'   instar4   = c(0.000674,   -1.22561,  32.04873, 15.27334),
 #'   prepupa   = c(0.00181533,  3.963006, 33.04467,  4.317786),
 #'   pupa      = c(0.000396921, 2.417172, 32.44556, 11.99131)
-#'   ) %>%
-#'   magrittr::set_rownames(c("a", "Tmin", "Tmax", "m")) %>%
-#'   t()
+#'   ) %>% t()
+#'
+#' colnames(dev_params) <- c("a", "Tmin", "Tmax", "m")
 #'
 #' # An example df with hourly temperature observations
 #' daily_obs <- example_df(
