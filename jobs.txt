@@ -1,0 +1,6 @@
+# jobs
+
+# remove dependencies: magrittr
+# hide function bodies when you run the bare function name in the console
+# you shouldn't change to output from dataframe to tibble silently. Perhaps use an option to output as nicer tibble (tibble = TRUE).
+# consideradd a function to convert fahrenheit to celsius, for overseas users? Or auto detect the location of input data and prompt this conversion?

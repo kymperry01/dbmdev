@@ -2,8 +2,7 @@
 % Please edit documentation in R/briere2.R
 \name{briere2}
 \alias{briere2}
-\title{Predict temperature-development of diamondback moth
-based on supplied parameters}
+\title{Predict temperature-dependent development using Briere's model II}
 \usage{
 briere2(df, a, Tmin, Tmax, m, direction)
 }
@@ -11,83 +10,77 @@ briere2(df, a, Tmin, Tmax, m, direction)
 \item{df}{A \code{data.frame} with a variable named "datetime" (POSIXct) and
 hourly temperature observations in a variable named "obs" (double).}
 
-\item{a}{A constant from Briere's model.}
+\item{a}{Constant from Briere's model.}
 
-\item{Tmin}{The minimum temperature development threshold.}
+\item{Tmin}{Minimum temperature development threshold.}
 
-\item{Tmax}{The maximum temperature development threshold.}
+\item{Tmax}{Maximum temperature development threshold.}
 
-\item{m}{The power coefficent from the Briere model.}
+\item{m}{Power coefficient from the Briere model.}
 
-\item{direction}{Either "forward" or "back" in time.}
+\item{direction}{Either "forward" or "back" in time. Predictions are simply
+performed from the start date (direction = "forward") or end (direction =
+"back") of the provided data.}
 }
 \value{
 A \code{tibble} with the original variables and new columns
 "dev" and "total_dev" added. Only rows where 0 <= "total_dev" < 1 are kept.
 }
 \description{
-Calculates the proportion of development per time
-increment for an individual lifestage of diamondback moth (DBM) using
-Briere model formula II and fitted development parameters.
+Calculate hourly development rate for a given insect species
+and life stage using hourly temperature observations and insect development
+parameters.
+
+This is an internal modelling function called by (PREDICT
+DEVELOPMENT) to calculate the point in time that development for the modelled
+life stage is completed. It is not for package users.
+Models are simply run with the input data provided without considering date
+range of interest.
 }
 \details{
-A modelling engine function that implements Briere's temperature-
-dependent development model equation 2 (Briere 1999). Calculates
+Implements Briere's temperature-dependent development model equation 2 (Briere 1999) to calculate
 incremental and cumulative development per time interval as a proportion
-from 0 to 1 for an individual DBM lifestage. Called by
-\code{\link{predict_development()}} to model multiple life stages.
+from 0 to 1 for an individual DBM life stage.
 }
 \examples{
-library(dplyr)
-library(lubridate)
 
-# Fitted development parameters for diamondback moth
-# TO DO: Supply this object with the package
-dev_params <- data.frame(
-  egg       = c(0.0003592,   1.754,    35.08,     4.347),
-  instar1_2 = c(0.00036,    -2.9122,   32.4565,  60.5092),
-  instar3   = c(0.0009688,   0.7893,   32.04,    14.53),
-  instar4   = c(0.000674,   -1.22561,  32.04873, 15.27334),
-  prepupa   = c(0.00181533,  3.963006, 33.04467,  4.317786),
-  pupa      = c(0.000396921, 2.417172, 32.44556, 11.99131)
-  ) \%>\% t()
+# Some example daily temperature observations
+dfd <- example_df(ndays = 90, start_date = "2024-03-01", seed = 24)
+head(dfd)
 
-colnames(dev_params) <- c("a", "Tmin", "Tmax", "m")
+# Interpolate to hourly temperatures
+dfh <- daily_to_hourly(dfd)
+head(dfh)
 
-# An example df with hourly temperature observations
-daily_obs <- example_df(
-  nlocations = 1, # use only 1 here
-  ndays = 30,
-  start_date = "2022-01-01",
-  seed = 24
-  )
-hourly_obs <- daily_to_hourly(daily_obs)
+#> TO DO: This gives wierd output with the location_crds columns, where tibble
+#> doesn't display all digits so the pasted cords look different. Fix.
 
-# Predict development for a single stage
-rownames(dev_params)
+# Get the DBM development parameters for Briere's model
+par <- dev_params()
+par
 
-# egg
-egg <- briere2(df = hourly_df,
-               a = 0.0003592,
-               Tmin = 1.754,
-               Tmax = 35.08,
-               m = 4.347,
-               direction = "forward")
+# Predict development forward in time for the "egg" stage
+s <- "egg"
+out1 <- briere2(df   = dfh,
+                a    = par[s, "a"],
+                Tmin = par[s, "Tmin"],
+                Tmax = par[s, "Tmax"],
+                m    = par[s, "m"],
+                direction = "forward")
+head(out1)
+tail(out1) # see the datetime when stage development is complete
 
-# grab the params directly for any stage
-stage <- "instar4"
+# Predict development backwards in time for the "instar3" stage
+s <- "instar3"
+out2 <- briere2(df   = dfh,
+                a    = par[s, "a"],
+                Tmin = par[s, "Tmin"],
+                Tmax = par[s, "Tmax"],
+                m    = par[s, "m"],
+                direction = "back")
+head(out2)
+tail(out2) # see the datetime when stage development started
 
-instar4 <- briere2(
-  df = hourly_df,
-  a    = dev_params[stage, "a"],
-  Tmin = dev_params[stage, "Tmin"],
-  Tmax = dev_params[stage, "Tmax"],
-  m    = dev_params[stage, "m"],
-  direction = "forward"
-  )
-
-head(instar4)
-tail(instar4)
 
 }
 \references{

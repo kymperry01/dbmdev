@@ -1,21 +1,29 @@
 Package: dbmdev
-Title: Predict incremental temperature-based development of diamondback moth
+Title: Predict temperature-dependent development rate of the diamondback moth
 Version: 2.0.0
 Authors@R:
-    c(person(given = "Kym",
+    c(person(given = "Kym D.",
              family = "Perry",
              role = c("aut", "cre"),
              email = "kym.perry@sa.gov.au",
-             comment = c(ORCID = "YOUR-ORCID-ID")),
+             comment = c(ORCID = "0000-0001-5015-2836")),
+      person(given = "Sam",
+             family = "Rogers",
+             role = "ctb"),
       person(given = "Stephen M.",
              family = "Pederson",
+             role = "ctb"),
+      person(given = "Mike A.",
+             family = "Keller",
              role = "ctb"))
-Description: What the package does (one paragraph)
+Description: PRedict
 Imports: 
     dplyr,
     tibble,
     lubridate,
     magrittr,
+    lutz,
+    suncalc,
     sp
 Suggests: 
     ggplot2,
@@ -25,5 +33,5 @@ License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 LazyData: TRUE
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 Config/testthat/edition: 3
