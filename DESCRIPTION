@@ -10,17 +10,20 @@ Authors@R:
       person(given = "Stephen M.",
              family = "Pederson",
              role = "ctb"))
-Description: What the package does (one paragraph).
+Description: What the package does (one paragraph)
 Imports: 
     dplyr,
+    tibble,
     lubridate,
     magrittr,
-    maptools,
-    parallel,
     sp
+Suggests: 
+    ggplot2,
+    testthat (>= 3.0.0)
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
     license
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 LazyData: TRUE
 RoxygenNote: 7.2.3
+Config/testthat/edition: 3
