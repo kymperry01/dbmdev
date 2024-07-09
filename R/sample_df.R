@@ -16,15 +16,52 @@
 #' @export
 #'
 #' @examples
-#' ## Single location with 3 days of sample data
-#' daily1 <- sample_df()
+#' library(dplyr)
+#' library(tidyr)
+#' library(ggplot2)
+#'
+#' ## Single location with 10 days of sample data
+#' daily1 <- sample_df(days = 10)
 #' head(daily1)
 #'
 #' ## 3 locations with 10 days of sample data from a specified date
-#' daily3 <- sample_df(locations = 3, days = 10, start_date = "2024-03-01")
+#' daily3 <- sample_df(locations = 3, days = 10, start_date = "2023-11-30")
 #' head(daily3)
 #' tail(daily3)
-
+#'
+#' ## Plot the data
+#' daily1 %>%
+#'   pivot_longer(
+#'     cols = min:max,
+#'     names_to = "Variable",
+#'     values_to = "Temperature (oC)"
+#'   ) %>%
+#'   ggplot(
+#'     aes(x = date, y = `Temperature (oC)`, colour = Variable)
+#'     ) +
+#'   geom_line() +
+#'   geom_point(pch = 21, colour = "black") +
+#'   theme_bw() +
+#'   ggtitle("Sample daily temperature observations at a single location") +
+#'   facet_wrap(~location_key)
+#'
+#' daily3 %>%
+#'   pivot_longer(
+#'     cols = min:max,
+#'     names_to = "Variable",
+#'     values_to = "Temperature (oC)"
+#'     ) %>%
+#'   ggplot(
+#'     aes(x = date, y = `Temperature (oC)`, colour = Variable)
+#'     ) +
+#'   geom_line() +
+#'   geom_point(pch = 21, colour = "black") +
+#'   theme_bw() +
+#'   theme(aspect.ratio = 1) +
+#'   labs(x = NULL) +
+#'   ggtitle("Sample daily temperature observations at 3 locations") +
+#'   facet_wrap(~location_key)
+#'
 sample_df <- function(
     locations = 1,
     days = 3,
@@ -34,9 +71,14 @@ sample_df <- function(
 
   if (!is.null(seed)){set.seed(seed)}
 
+  # check the start date is in the correct format
+  check_date <- suppressWarnings(lubridate::as_date(start_date))
+  if(is.na(check_date)){
+    stop("Start date must be in YYYY-MM-DD format.")
+  }
+
   start <- lubridate::as_date(start_date)
   end   <- lubridate::as_date(start_date) + (days - 1)
-
 
   adj <- 4 # value (oC) to adjust max temp up by
 
@@ -61,33 +103,16 @@ sample_df <- function(
   }
 
 # # plot the sample data
-# library(tidyverse)
-# library(lubridate)
-# library(ggplot2)
-# d1 <- sample_df(days = 30)
-#
-# d1 %>%
-#   pivot_longer(
-#     cols = min:max,
-#     names_to = "var",
-#     values_to = "obs"
-#   ) %>%
-#   ggplot(
-#     aes(x = date,
-#         y = obs,
-#         colour = var)
-#     ) +
-#   geom_line() +
-#   geom_point(
-#     pch = 21,
-#     colour = "black"
-#   ) +
-#   theme_bw() +
-#   labs(x = NULL,
-#        y = "Daily temperature (oC)",
-#        colour = "Variable") +
-#   ggtitle("Sample daily temperature observations") +
-#   facet_wrap(~location_key)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+
+
+
+daily3 <- sample_df(locations = 3, days = 10, start_date = "2023-11-30")
+
+
 
 # daily3 <- sample_df(days = 8, locations = 3)
 # hourly3 <- hourly(daily3)

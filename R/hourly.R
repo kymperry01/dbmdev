@@ -61,7 +61,51 @@
 #'   labs(x = NULL, y = "Temperature (oC)")
 hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
 
-  # function to apply to a single row df with the model params
+
+  # check input dataframe for required variables
+  reqd_vars <- c("lat", "lon", "date", "min", "max")
+  reqd_class <- c("numeric", "numeric", "Date", "numeric", "numeric")
+
+  miss_vars <- reqd_vars[which(!reqd_vars %in% names(df))]
+
+  if(length(miss_vars) > 0){
+    stop(
+      paste(
+        "Input data frame is missing the following required variables:",
+        paste(miss_vars, collapse = ", ")
+        )
+      )
+  }
+
+  # check input dataframe for correct variable classes
+  # To do: Fix this error message to avoid printing list elements
+  df_class <- sapply(df, class)
+  names(reqd_class) <- reqd_names
+  # reqd_class
+
+  if(!identical(reqd_class[reqd_vars], df_class[reqd_vars])){
+
+    wrong <- which(!df_class[reqd_vars] == reqd_class[reqd_vars])
+
+       # function to get the correct class for each reqd variable
+    get_class <- function(i){
+      # msg <-
+        paste("Variable named",
+            names(reqd_class[wrong][i]),
+            "must be class",
+            reqd_class[wrong][i])
+      # print(msg)
+    }
+
+    # purrr::walks avoids printing list names to console
+    # To do: suppress "error: 12" in the output
+    stop(seq_along(wrong) %>% lapply(get_class))
+    # stop(msg[1])
+    # msg[-1]
+
+  }
+
+  # function to apply to a single df row with the model params
   hourly_obs <- function(df) {
 
     hour <- seq(df$Hn[1] + 1, df$Hp[1]) # sunrise + 1 to sunrise next day
@@ -95,15 +139,17 @@ hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
   }
 
   out <- df %>%
-    dplyr::mutate(date = lubridate::as_date(date),
-           tz = lutz::tz_lookup_coords(lat, lon,
-                                       method = "fast", warn = FALSE)
-    ) %>%
-    dplyr::group_by(tz) %>%
-    dplyr::group_split() %>%
+    dplyr::mutate(
+      date = lubridate::as_date(date),
+      tz = lutz::tz_lookup_coords(
+        lat, lon, method = "fast", warn = FALSE
+        )
+      ) %>%
+    # dplyr::group_by(tz) %>%
+    dplyr::group_split(tz) %>%
+    # output sunrise and sunset times in the local timezone
     lapply(function(df) {
 
-      # output sunrise and sunset times in the local timezone
       suncalc::getSunlightTimes(
         data = df,
         keep = c("sunrise", "sunset"),
@@ -121,8 +167,8 @@ hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
                   H0 = lubridate::hour(sunset),  # sunset hour
                   Hp = Hn + 24,                  # sunrise hour next day
                   Hx = H0 - 4)  %>%              # hour Tx is reached %>%
-    group_by(1:nrow(.)) %>%
-    group_split() %>%
+    # dplyr::group_by(1:nrow(.)) %>%
+    dplyr::group_split(1:nrow(.)) %>%
     lapply(hourly_obs) %>%
     dplyr::bind_rows() %>%
     dplyr::arrange(location_crds, datetime, obs) %>%
@@ -136,16 +182,16 @@ hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
       dplyr::distinct(location_crds, location_key)
 
     out <- out %>%
-      left_join(key, by = "location_crds") %>%
+      dplyr::left_join(key, by = "location_crds") %>%
       dplyr::select(location_key, everything()) %>%
-      arrange(location_key, datetime)
-  }
+      dplyr::arrange(location_key, datetime)
+    }
 
   # only evaluate if a location key does not exist and add key = TRUE
   if (!"location_key" %in% names(df) && add_location_key) {
 
     # pad num with zeros to minimum width 2
-    nch <- ifelse(nchar(nrow(df)) < 2, 2, nchar(nrow(df)))
+    # nch <- ifelse(nchar(nrow(df)) < 2, 2, nchar(nrow(df)))
 
     new_key <- df[, c("lat", "lon")] %>%
       dplyr::distinct(lat, lon) %>%
@@ -154,16 +200,15 @@ hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
                     idx = 1:nrow(.),
                     # idx = str_pad(idx, width = nch, side = "left", pad = 0),
                     location_key = paste0("loc", idx)) %>%
-      dplyr::select(location_crds, location_key)
+      dplyr::select(lat, lon, location_crds, location_key)
 
     out <- out %>%
-      left_join(new_key, by = "location_crds") %>%
+      dplyr::left_join(new_key, by = "location_crds") %>%
       dplyr::select(location_key, everything()) %>%
-      arrange(location_key, datetime)
+      dplyr::arrange(location_key, datetime)
 
     message("New location key added")
   }
-
 
   if (keep_suntimes){ # to check results
     return(out)
@@ -178,24 +223,11 @@ hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
   dplyr::select(out, -sunrise, -sunset, -tz)
 }
 
-# TO DO
-# Remove option to keep output times for sunrise and sunset (sooo many duplicate rows).
-# Instead create an option to output a list with sunrise/settimes for locations
-# Check column names are preserved in the output
-# Simulated data looks a bit odd with daily max and min numbers. Adjust code
-# in sample_df
 
-# TESTING
-# daily3 <- sample_df(days = 8, locations = 3)
-# hourly3 <- hourly(daily3)
+# test input is correct
+# df
 #
-# hourly3 %>%
-#   ggplot(aes(x = datetime, y = obs)) +
-#   geom_line() +
-#   geom_point() +
-#   facet_wrap(~location_key) +
-#   theme_bw() +
-#   theme(aspect.ratio = 1) +
-#   labs(x = NULL, y = "Temperature (oC)")
-
+# df_wrong <- df[, c("lon", "lat", "max", "min", "date")] %>%
+#   mutate(max = as.character(max))
+# hourly(d1)
 
