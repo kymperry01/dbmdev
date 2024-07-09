@@ -4,3 +4,13 @@
 # hide function bodies when you run the bare function name in the console
 # you shouldn't change to output from dataframe to tibble silently. Perhaps use an option to output as nicer tibble (tibble = TRUE).
 # consideradd a function to convert fahrenheit to celsius, for overseas users? Or auto detect the location of input data and prompt this conversion?
+# In sample_df, ensure set seed does not change user state
+
+# notes
+# global variables https://stackoverflow.com/questions/12598242/global-variables-in-packages-in-r # generally a no-go
+
+# check R landscape
+# https://rdrr.io/cran/chillR/man/make_hourly_temps.html
+
+# global variables problems
+# https://stackoverflow.com/questions/9439256/how-can-i-handle-r-cmd-check-no-visible-binding-for-global-variable-notes-when # hum and hope

@@ -1,21 +1,25 @@
 #' Interpolate hourly temperatures from daily max/min temperatures
 #' @description
-#' Interpolates hourly temperature observations from daily maximum and minimum
-#' temperatures for a given geographic location, using the
-#' model of Cesaraccio (2001).
+#' \code{hourly} interpolates hourly temperature observations from daily maximum
+#' and minimum temperatures for a given geographic location using the
+#' model of Cesaraccio (2001). Hourly temperatures can be used to predict
+#' insect development using \code{predict_development}.
 #'
-#' @param df A \code{data.frame} of daily max/min temperature observations in
-#' degrees celsius and geographic coordinates in decimal degree format.
-#' The \code{data.frame} must have, at a minimum, five variables named "date"
-#' (Date), "lat" (double), "lon" (double), "min" (double), and "max" (double).
-#' All columns in the input \code{data.frame} are preserved in the output.
-#' @param add_location_key Optionally generate a unique location key (character
-#' string) to the output \code{data.frame} for each set of unique geographic
-#' coordinates, if one does not already exist. This is useful when modelling
-#' development at multiple locations using the function (ADD FUNCTION NAME).
-#' @param keep_suntimes Whether to keep columns with the sunrise and sunset times in the output
+#' @param df A \code{data.frame} of daily maximum and minimum temperature
+#' observations in degrees celsius and geographic coordinates in decimal
+#' degree format. The \code{data.frame} must have, at a minimum, five variables
+#' named "date" (Date), "lat" (double), "lon" (double), "min" (double), and
+#' "max" (double). All columns in the input \code{data.frame} are preserved in
+#' the output.
+#' @param add_location_key Optionally generate a variable to the output
+#' \code{data.frame} with a unique location key (character string) for each set
+#' of unique geographic coordinates, if one does not already exist. This is
+#' useful when modelling development at multiple locations using the function
+#' \code{predict_development}.
+#' @param keep_suntimes Whether to preserve the sunrise and sunset
+#' times used for calculations in the output.
 #'
-#' @return A \code{tibble} # we should default to \code{data.frame}
+#' @return \code{data.frame}
 #' @import suncalc lutz
 #'
 #' @references Cesaraccio et al. (2001). An improved model for determining
@@ -25,26 +29,37 @@
 #' @export
 #'
 #' @examples
-#' # Single location
-#' df1  <- example_df(nlocations = 1, ndays = 90, start_date = "2024-03-01")
-#' head(df1)
-#' h1 <- daily_to_hourly(df1)
-#' head(h1)
-#' tail(h1)
+#' library(dplyr)
+#' library(ggplot2)
+#'
+#' # Single location with 3 days
+#' daily1  <- sample_df()
+#' head(daily1)
+#'
+#' hourly1 <- hourly(daily1)
+#' head(hourly1)
+#' tail(hourly1)
 #' # PLOT THE DATA - ADD CODE
 #'
-#' # Multiple locations
-#' df3  <- example_df(nlocations = 3, ndays = 90, start_date = "2024-03-01")
-#' head(df3)
-#' tail(df3)
-#' dim(df3)
-#' h3 <- d2h(df3)
-#' head(h3)
-#' tail(h3)
-#' dim(h3)
-#' # PLOT THE DATA - ADD CODE
+#' # 3 locations with 5 days data from a specified date
+#' daily3  <- sample_df(locations = 3, days = 5, start_date = "2024-03-01")
+#' print(daily3)
 #'
-daily_to_hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
+#' hourly3 <- hourly(daily3)
+#' head(hourly3)
+#' tail(hourly3)
+#' dim(hourly3)
+#'
+#' # Plot temperatures
+#' hourly3 %>%
+#'   ggplot(aes(x = datetime, y = obs)) +
+#'   geom_line() +
+#'   geom_point() +
+#'   facet_wrap(~location_key) +
+#'   theme_bw() +
+#'   theme(aspect.ratio = 1) +
+#'   labs(x = NULL, y = "Temperature (oC)")
+hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
 
   # function to apply to a single row df with the model params
   hourly_obs <- function(df) {
@@ -76,16 +91,16 @@ daily_to_hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE)
                     location_crds = paste(lat, lon, sep = "_")) %>%
       # dplyr::arrange(lat) %>% # for sensible numerically ordered location_keys
       dplyr::select(location_crds, datetime, obs, sunrise, sunset, tz) %>%
-      tibble()
+      data.frame()
   }
 
   out <- df %>%
-    mutate(date = lubridate::as_date(date),
+    dplyr::mutate(date = lubridate::as_date(date),
            tz = lutz::tz_lookup_coords(lat, lon,
                                        method = "fast", warn = FALSE)
     ) %>%
-    group_by(tz) %>%
-    group_split() %>%
+    dplyr::group_by(tz) %>%
+    dplyr::group_split() %>%
     lapply(function(df) {
 
       # output sunrise and sunset times in the local timezone
@@ -98,20 +113,20 @@ daily_to_hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE)
 
     }) %>%
     dplyr::bind_rows() %>%
-    dplyr::rename(Tn = min,     # Tmin current day
-                  Tx = max) %>% # Tmax current day
-    dplyr::mutate(Tp = dplyr::lead(Tn, n = 1), # Tmin next day
-                  T0 = Tx - 0.39 * (Tx - Tp),  # T at sunset
+    dplyr::rename(Tn = min,                      # Tmin current day
+                  Tx = max) %>%                  # Tmax current day
+    dplyr::mutate(Tp = dplyr::lead(Tn, n = 1),   # Tmin next day
+                  T0 = Tx - 0.39 * (Tx - Tp),    # T at sunset
                   Hn = lubridate::hour(sunrise), # sunrise hour
                   H0 = lubridate::hour(sunset),  # sunset hour
-                  Hp = Hn + 24, # sunrise hour next day
-                  Hx = H0 - 4)  %>% # hour Tx is reached %>%
+                  Hp = Hn + 24,                  # sunrise hour next day
+                  Hx = H0 - 4)  %>%              # hour Tx is reached %>%
     group_by(1:nrow(.)) %>%
     group_split() %>%
     lapply(hourly_obs) %>%
     dplyr::bind_rows() %>%
     dplyr::arrange(location_crds, datetime, obs) %>%
-    filter(!is.na(obs)) # remove trailing NAs caused by no sunrise for next day
+    dplyr::filter(!is.na(obs)) # remove trailing NAs caused by no sunrise for next day
 
   # if a location_key is provided, keep it (using crds)
   if ("location_key" %in% names(df)) {
@@ -137,7 +152,7 @@ daily_to_hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE)
       dplyr::arrange(lat) %>%
       dplyr::mutate(location_crds = paste(lat, lon, sep = "_"),
                     idx = 1:nrow(.),
-                    idx = str_pad(idx, width = nch, side = "left", pad = 0),
+                    # idx = str_pad(idx, width = nch, side = "left", pad = 0),
                     location_key = paste0("loc", idx)) %>%
       dplyr::select(location_crds, location_key)
 
@@ -166,4 +181,21 @@ daily_to_hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE)
 # TO DO
 # Remove option to keep output times for sunrise and sunset (sooo many duplicate rows).
 # Instead create an option to output a list with sunrise/settimes for locations
-# Check colun names are preserved in the output
+# Check column names are preserved in the output
+# Simulated data looks a bit odd with daily max and min numbers. Adjust code
+# in sample_df
+
+# TESTING
+# daily3 <- sample_df(days = 8, locations = 3)
+# hourly3 <- hourly(daily3)
+#
+# hourly3 %>%
+#   ggplot(aes(x = datetime, y = obs)) +
+#   geom_line() +
+#   geom_point() +
+#   facet_wrap(~location_key) +
+#   theme_bw() +
+#   theme(aspect.ratio = 1) +
+#   labs(x = NULL, y = "Temperature (oC)")
+
+

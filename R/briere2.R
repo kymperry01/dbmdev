@@ -4,11 +4,10 @@
 #' and life stage using hourly temperature observations and insect development
 #' parameters.
 #'
-#' This is an internal modelling function called by (PREDICT
-#' DEVELOPMENT) to calculate the point in time that development for the modelled
-#' life stage is completed. It is not for package users.
-#' Models are simply run with the input data provided without considering date
-#' range of interest.
+#' This is an internal modelling function called by \code{} to calculate the
+#' point in time that development for the modelled life stage is completed.
+#' Models are run with the input data without considering datetime range of
+#' interest.
 #'
 #' @details Implements Briere's temperature-dependent development model equation 2 (Briere 1999) to calculate
 #' incremental and cumulative development per time interval as a proportion
@@ -29,28 +28,22 @@
 #'
 #' @import dplyr
 #'
-#' @references Briere, Jean-Francois, et al. (1999) A novel rate model of temperature-dependent development for arthropods. Environmental Entomology 28.1: 22-29.
+#' @references Briere, Jean-Francois, et al. (1999) A novel rate model of temperature-dependent development for arthropods.
+#' Environmental Entomology 28.1: 22-29.
 #'
 #' @examples
+#' # Generate sample hourly temperature observations
+#' daily1  <- sample_df(days = 90, start_date = "2024-03-01")
+#' hourly1 <- hourly(daily1)
+#' head(hourly1)
 #'
-#' # Some example daily temperature observations
-#' dfd <- example_df(ndays = 90, start_date = "2024-03-01", seed = 24)
-#' head(dfd)
-#'
-#' # Interpolate to hourly temperatures
-#' dfh <- daily_to_hourly(dfd)
-#' head(dfh)
-#'
-#' #> TO DO: This gives wierd output with the location_crds columns, where tibble
-#' #> doesn't display all digits so the pasted cords look different. Fix.
-#'
-#' # Get the DBM development parameters for Briere's model
+#' # Diamondback moth development parameters for Briere's model II
 #' par <- dev_params()
 #' par
 #'
 #' # Predict development forward in time for the "egg" stage
 #' s <- "egg"
-#' out1 <- briere2(df   = dfh,
+#' out1 <- briere2(df   = hourly1,
 #'                 a    = par[s, "a"],
 #'                 Tmin = par[s, "Tmin"],
 #'                 Tmax = par[s, "Tmax"],
@@ -61,7 +54,7 @@
 #'
 #' # Predict development backwards in time for the "instar3" stage
 #' s <- "instar3"
-#' out2 <- briere2(df   = dfh,
+#' out2 <- briere2(df   = hourly1,
 #'                 a    = par[s, "a"],
 #'                 Tmin = par[s, "Tmin"],
 #'                 Tmax = par[s, "Tmax"],
@@ -70,6 +63,7 @@
 #' head(out2)
 #' tail(out2) # see the datetime when stage development started
 #'
+#' ## End
 #'
 #' @export
 briere2 <- function(df, a, Tmin, Tmax, m, direction) {
@@ -100,6 +94,10 @@ briere2 <- function(df, a, Tmin, Tmax, m, direction) {
 
   df %>%
     dplyr::mutate(dev = dev, total_dev = cumsum(dev)) %>%
-    dplyr::filter(total_dev < 1)
+    dplyr::filter(total_dev < 1) %>%
+    data.frame()
 
 }
+
+# TO DO: This gives wierd output with the location_crds columns, where tibble
+# doesn't display all digits so the pasted cords look different. Fix.
