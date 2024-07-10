@@ -84,7 +84,7 @@ point and developmental stage).
 library(dplyr)
 
 # Sample hourly temperatures at a given location
-d1 <- sample_df(days = 200, start_date = "2023-09-01")
+d1 <- daily(days = 200, start_date = "2023-09-01")
 h1 <- hourly(d1)
 
 # See the life stages

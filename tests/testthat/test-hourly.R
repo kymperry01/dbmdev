@@ -1,13 +1,11 @@
-# test_that("multiplication works", {
-#   expect_equal(2 * 2, 4)
-# })
-
 # Create sample objects (data frames) for testing the hourly() function
+
 # single location
-d1 <- sample_df(locations = 1, days = 10, start_date = "2024-03-01")
+d1 <- daily(locations = 1, days = 10, start_date = "2024-03-01")
 d1_no_key <- d1 %>% dplyr::select(-location_key) # remove location_key
+
 # 50 locations
-d50 <- sample_df(locations = 50, days = 3,  start_date = "2020-07-19")
+d50 <- daily(locations = 50, days = 3,  start_date = "2020-07-19")
 d50_no_key <- d50 %>% dplyr::select(-location_key) # remove location_key
 
 

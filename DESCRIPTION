@@ -19,14 +19,12 @@ Authors@R:
 Description: Predict life-stage specific development rates of diamondback moth using hourly temperatures.
 Imports: 
     dplyr,
-    tibble,
     lubridate,
-    magrittr,
     lutz,
-    suncalc,
-    sp
+    suncalc
 Suggests:
     ggplot2,
+    tidyr,
     testthat (>= 3.0.0)
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
     license

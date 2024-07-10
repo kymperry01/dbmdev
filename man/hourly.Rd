@@ -2,16 +2,18 @@
 % Please edit documentation in R/hourly.R
 \name{hourly}
 \alias{hourly}
-\title{Interpolate hourly temperatures from daily max/min temperatures}
+\title{Interpolate hourly temperatures from daily maximum and minimum temperatures}
 \usage{
 hourly(df, add_location_key = FALSE, keep_suntimes = FALSE)
 }
 \arguments{
 \item{df}{A \code{data.frame} of daily maximum and minimum temperature
-observations in degrees celsius and geographic coordinates in decimal
-degree format. The \code{data.frame} must have, at a minimum, five variables
+observations in degrees Celsius and geographic coordinates in decimal
+degree format.
+The \code{data.frame} must have, at a minimum, five variables
 named "date" (Date), "lat" (double), "lon" (double), "min" (double), and
-"max" (double). All columns in the input \code{data.frame} are preserved in
+"max" (double).
+All columns in the input \code{data.frame} are preserved in
 the output.}
 
 \item{add_location_key}{Optionally generate a variable to the output
@@ -29,24 +31,24 @@ times used for calculations in the output.}
 \description{
 \code{hourly} interpolates hourly temperature observations from daily maximum
 and minimum temperatures for a given geographic location using the
-model of Cesaraccio (2001). Hourly temperatures can be used to predict
-insect development using \code{predict_development}.
+model of Cesaraccio (2001).
+Hourly temperatures are used to predict temperature-dependent development
+rates of insects with the function \code{\link{predict_development}}.
 }
 \examples{
 library(dplyr)
 library(ggplot2)
 
 # Single location with 3 days
-daily1  <- sample_df()
+daily1  <- daily()
 head(daily1)
 
 hourly1 <- hourly(daily1)
 head(hourly1)
 tail(hourly1)
-# PLOT THE DATA - ADD CODE
 
 # 3 locations with 5 days data from a specified date
-daily3  <- sample_df(locations = 3, days = 5, start_date = "2024-03-01")
+daily3  <- daily(locations = 3, days = 5, start_date = "2024-03-01")
 print(daily3)
 
 hourly3 <- hourly(daily3)
@@ -61,8 +63,10 @@ hourly3 \%>\%
   geom_point() +
   facet_wrap(~location_key) +
   theme_bw() +
-  theme(aspect.ratio = 1) +
-  labs(x = NULL, y = "Temperature (oC)")
+  theme(aspect.ratio = 1,
+  axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+  labs(x = NULL, y = "Temperature (oC)") +
+  ggtitle("Hourly temperature observations for 3 locations")
 }
 \references{
 Cesaraccio et al. (2001). An improved model for determining

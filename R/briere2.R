@@ -32,8 +32,8 @@
 #' Environmental Entomology 28.1: 22-29.
 #'
 #' @examples
-#' # Generate sample hourly temperature observations
-#' daily1  <- sample_df(days = 90, start_date = "2024-03-01")
+#' # Sample hourly temperature observations
+#' daily1  <- daily(days = 90, start_date = "2024-03-01")
 #' hourly1 <- hourly(daily1)
 #' head(hourly1)
 #'
@@ -98,6 +98,3 @@ briere2 <- function(df, a, Tmin, Tmax, m, direction) {
     data.frame()
 
 }
-
-# TO DO: This gives wierd output with the location_crds columns, where tibble
-# doesn't display all digits so the pasted cords look different. Fix.

@@ -1,21 +1,27 @@
-#' Interpolate hourly temperatures from daily max/min temperatures
+#' Interpolate hourly temperatures from daily maximum and minimum temperatures
+#'
 #' @description
 #' \code{hourly} interpolates hourly temperature observations from daily maximum
 #' and minimum temperatures for a given geographic location using the
-#' model of Cesaraccio (2001). Hourly temperatures can be used to predict
-#' insect development using \code{predict_development}.
+#' model of Cesaraccio (2001).
+#' Hourly temperatures are used to predict temperature-dependent development
+#' rates of insects with the function \code{\link{predict_development}}.
 #'
 #' @param df A \code{data.frame} of daily maximum and minimum temperature
-#' observations in degrees celsius and geographic coordinates in decimal
-#' degree format. The \code{data.frame} must have, at a minimum, five variables
+#' observations in degrees Celsius and geographic coordinates in decimal
+#' degree format.
+#' The \code{data.frame} must have, at a minimum, five variables
 #' named "date" (Date), "lat" (double), "lon" (double), "min" (double), and
-#' "max" (double). All columns in the input \code{data.frame} are preserved in
+#' "max" (double).
+#' All columns in the input \code{data.frame} are preserved in
 #' the output.
+#'
 #' @param add_location_key Optionally generate a variable to the output
 #' \code{data.frame} with a unique location key (character string) for each set
 #' of unique geographic coordinates, if one does not already exist. This is
 #' useful when modelling development at multiple locations using the function
 #' \code{predict_development}.
+#'
 #' @param keep_suntimes Whether to preserve the sunrise and sunset
 #' times used for calculations in the output.
 #'
@@ -33,16 +39,15 @@
 #' library(ggplot2)
 #'
 #' # Single location with 3 days
-#' daily1  <- sample_df()
+#' daily1  <- daily()
 #' head(daily1)
 #'
 #' hourly1 <- hourly(daily1)
 #' head(hourly1)
 #' tail(hourly1)
-#' # PLOT THE DATA - ADD CODE
 #'
 #' # 3 locations with 5 days data from a specified date
-#' daily3  <- sample_df(locations = 3, days = 5, start_date = "2024-03-01")
+#' daily3  <- daily(locations = 3, days = 5, start_date = "2024-03-01")
 #' print(daily3)
 #'
 #' hourly3 <- hourly(daily3)
@@ -57,8 +62,10 @@
 #'   geom_point() +
 #'   facet_wrap(~location_key) +
 #'   theme_bw() +
-#'   theme(aspect.ratio = 1) +
-#'   labs(x = NULL, y = "Temperature (oC)")
+#'   theme(aspect.ratio = 1,
+#'   axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+#'   labs(x = NULL, y = "Temperature (oC)") +
+#'   ggtitle("Hourly temperature observations for 3 locations")
 hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
 
 
@@ -163,9 +170,11 @@ hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
                   Hn = lubridate::hour(sunrise), # sunrise hour
                   H0 = lubridate::hour(sunset),  # sunset hour
                   Hp = Hn + 24,                  # sunrise hour next day
-                  Hx = H0 - 4                   # hour Tx is reached
+                  Hx = H0 - 4,                   # hour Tx is reached
+                  # purely for grouping
+                  location_crds = paste(lat, lon, sep = "_")
                   )  %>%
-    dplyr::group_split(location_key, 1:nrow(.)) %>%
+    dplyr::group_split(location_crds, 1:nrow(.)) %>%
     lapply(hourly_obs) %>%
     dplyr::bind_rows() %>%
     dplyr::arrange(location_crds, datetime, obs) %>%
