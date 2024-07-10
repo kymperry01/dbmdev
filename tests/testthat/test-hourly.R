@@ -6,12 +6,9 @@
 # single location
 d1 <- sample_df(locations = 1, days = 10, start_date = "2024-03-01")
 d1_no_key <- d1 %>% dplyr::select(-location_key) # remove location_key
-# 3 locations
-d3 <- sample_df(locations = 3, days = 5,  start_date = "2023-01-01")
-d3_no_key <- d3 %>% dplyr::select(-location_key) # remove location_key
-# 101 locations
-d101 <- sample_df(locations = 101, days = 3,  start_date = "2020-07-19")
-d101_no_key <- d101 %>% dplyr::select(-location_key) # remove location_key
+# 50 locations
+d50 <- sample_df(locations = 50, days = 3,  start_date = "2020-07-19")
+d50_no_key <- d50 %>% dplyr::select(-location_key) # remove location_key
 
 
 # Expect messages about locations_key
@@ -21,7 +18,7 @@ test_that("messages work when a location key already exists, 1 location", {
 })
 
 test_that("messages work when a location key already exists, many locations", {
-  expect_message(hourly(d101, add_location_key = TRUE),
+  expect_message(hourly(d50, add_location_key = TRUE),
                  regexp = "Existing location key kept")
 })
 
@@ -31,7 +28,7 @@ test_that("messages work when a new location key is added, 1 location", {
 })
 
 test_that("messages work when a location key is added, 3 locations", {
-  expect_message(hourly(d3_no_key, add_location_key = TRUE),
+  expect_message(hourly(d50_no_key, add_location_key = TRUE),
                  regexp = "New location key added")
 })
 
@@ -51,4 +48,13 @@ test_that("errors work if variables of input dataframe are the wrong class", {
 
 # test the error outputs one row per variable that has wrong class
 # Add.
+
+# Check output for a chronologically complete time series
+# with no duplicated datetimes. The same test takes care of both
+test_that("time series is complete for a single location", {
+  h1 <- hourly(d1)
+  complete_series <- seq(min(h1$datetime), max(h1$datetime), by = "hour")
+  expect_equal(h1$datetime, complete_series)
+})
+
 

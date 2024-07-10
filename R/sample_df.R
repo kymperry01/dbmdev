@@ -74,7 +74,7 @@ sample_df <- function(
   # check the start date is in the correct format
   check_date <- suppressWarnings(lubridate::as_date(start_date))
   if(is.na(check_date)){
-    stop("Start date must be in YYYY-MM-DD format.")
+    stop("start_date must be in YYYY-MM-DD format (character).")
   }
 
   start <- lubridate::as_date(start_date)
@@ -102,16 +102,16 @@ sample_df <- function(
     dplyr::select(-diff, max)
   }
 
-# # plot the sample data
-library(dplyr)
-library(tidyr)
-library(ggplot2)
-
-
-
-
-daily3 <- sample_df(locations = 3, days = 10, start_date = "2023-11-30")
-
+# # # plot the sample data
+# library(dplyr)
+# library(tidyr)
+# library(ggplot2)
+#
+#
+#
+#
+# daily3 <- sample_df(locations = 3, days = 10, start_date = "2023-11-30")
+#
 
 
 # daily3 <- sample_df(days = 8, locations = 3)

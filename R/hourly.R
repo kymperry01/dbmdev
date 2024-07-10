@@ -143,7 +143,6 @@ hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
         lat, lon, method = "fast", warn = FALSE
         )
       ) %>%
-    # dplyr::group_by(tz) %>%
     dplyr::group_split(tz) %>%
     # output sunrise and sunset times in the local timezone
     lapply(function(df) {
@@ -164,9 +163,9 @@ hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
                   Hn = lubridate::hour(sunrise), # sunrise hour
                   H0 = lubridate::hour(sunset),  # sunset hour
                   Hp = Hn + 24,                  # sunrise hour next day
-                  Hx = H0 - 4)  %>%              # hour Tx is reached %>%
-    # dplyr::group_by(1:nrow(.)) %>%
-    dplyr::group_split(1:nrow(.)) %>%
+                  Hx = H0 - 4                   # hour Tx is reached
+                  )  %>%
+    dplyr::group_split(location_key, 1:nrow(.)) %>%
     lapply(hourly_obs) %>%
     dplyr::bind_rows() %>%
     dplyr::arrange(location_crds, datetime, obs) %>%
@@ -188,15 +187,11 @@ hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
   # only evaluate if a location key does not exist and add key = TRUE
   if (!"location_key" %in% names(df) && add_location_key) {
 
-    # pad num with zeros to minimum width 2
-    # nch <- ifelse(nchar(nrow(df)) < 2, 2, nchar(nrow(df)))
-
     new_key <- df[, c("lat", "lon")] %>%
       dplyr::distinct(lat, lon) %>%
       dplyr::arrange(lat) %>%
       dplyr::mutate(location_crds = paste(lat, lon, sep = "_"),
                     idx = 1:nrow(.),
-                    # idx = str_pad(idx, width = nch, side = "left", pad = 0),
                     location_key = paste0("loc", idx)) %>%
       dplyr::select(lat, lon, location_crds, location_key)
 
@@ -218,17 +213,11 @@ hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
     message("Existing location key kept")
   }
 
-  dplyr::select(out, -sunrise, -sunset, -tz)
-}
+  # remove any duplicated datetimes in output. This occasionally happens when
+  # rounding to whole hours in lubridate::hour(sunrise/sunset)
+  dplyr::select(out, -sunrise, -sunset, -tz) %>%
+    dplyr::distinct(location_key, datetime, .keep_all = TRUE)
 
+  }
 
-# test input is correct
-# df <- sample_df(days = 5)
-# df_wrong_cl <- df %>% mutate(min = as.character(min), date = as.character(date))
-# df <- df_wrong_cl
-# df
-#
-# df_wrong <- df[, c("lon", "lat", "max", "min", "date")] %>%
-#   mutate(max = as.character(max))
-# hourly(d1)
 
