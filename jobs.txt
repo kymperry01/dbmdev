@@ -8,6 +8,10 @@
 # Add code for how models were fitted to the package so that it can be re-generated at any time 
 # Access gridded climate data for Australia to predict development at any location
 
+# Predict development
+# Allow multiple locations in one function?
+# User shoud be able to query the output to find out a timepoint when a particular event happened ("egg lay", or completion of pupal development (eclosion).
+# Perhaps this meeds a separate function to query the output 
 
 # notes
 # global variables https://stackoverflow.com/questions/12598242/global-variables-in-packages-in-r # generally a no-go
@@ -40,4 +44,5 @@
 # Predict seasonal phenology of DBM anywhere in Australia. Use it to predict risk?
 # Model Helicoverpa risk
 # 
+
 

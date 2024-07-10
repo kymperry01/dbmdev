@@ -3,6 +3,7 @@
 export(briere2)
 export(dev_params)
 export(hourly)
+export(predict_dev)
 export(sample_df)
 import(dplyr)
 import(lutz)
