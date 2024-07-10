@@ -50,4 +50,5 @@ test_that("errors work if variables of input dataframe are the wrong class", {
 })
 
 # test the error outputs one row per variable that has wrong class
+# Add.
 

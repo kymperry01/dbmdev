@@ -62,8 +62,8 @@
 hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
 
 
-  # check input dataframe for required variables
-  reqd_vars <- c("lat", "lon", "date", "min", "max")
+  # check that required variables exist in input data frame
+  reqd_vars  <- c("lat", "lon", "date", "min", "max")
   reqd_class <- c("numeric", "numeric", "Date", "numeric", "numeric")
 
   miss_vars <- reqd_vars[which(!reqd_vars %in% names(df))]
@@ -77,32 +77,30 @@ hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
       )
   }
 
-  # check input dataframe for correct variable classes
-  # To do: Fix this error message to avoid printing list elements
+  # check that input data frame has correct variable classes
   df_class <- sapply(df, class)
-  names(reqd_class) <- reqd_names
-  # reqd_class
+  names(reqd_class) <- reqd_vars
 
   if(!identical(reqd_class[reqd_vars], df_class[reqd_vars])){
 
     wrong <- which(!df_class[reqd_vars] == reqd_class[reqd_vars])
 
-       # function to get the correct class for each reqd variable
-    get_class <- function(i){
-      # msg <-
-        paste("Variable named",
-            names(reqd_class[wrong][i]),
+    get_correct_class <- function(i){
+      msg <- paste("Variable named",
+             names(reqd_class[wrong][i]),
             "must be class",
             reqd_class[wrong][i])
-      # print(msg)
+
+      if(i == 1) {
+        # add line break to start and end if it's the first element
+        paste0(" In input dataframe,\n", msg, "\n")
+      } else {
+        # no line break to if it's the end
+        if(i == length(wrong)) msg
+      }
+
     }
-
-    # purrr::walks avoids printing list names to console
-    # To do: suppress "error: 12" in the output
-    stop(seq_along(wrong) %>% lapply(get_class))
-    # stop(msg[1])
-    # msg[-1]
-
+    stop(seq_along(wrong) %>% lapply(get_correct_class))
   }
 
   # function to apply to a single df row with the model params
@@ -225,6 +223,9 @@ hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
 
 
 # test input is correct
+# df <- sample_df(days = 5)
+# df_wrong_cl <- df %>% mutate(min = as.character(min), date = as.character(date))
+# df <- df_wrong_cl
 # df
 #
 # df_wrong <- df[, c("lon", "lat", "max", "min", "date")] %>%
