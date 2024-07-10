@@ -42,8 +42,8 @@ incremental and cumulative development per time interval as a proportion
 from 0 to 1 for an individual DBM life stage.
 }
 \examples{
-# Generate sample hourly temperature observations
-daily1  <- sample_df(days = 90, start_date = "2024-03-01")
+# Sample hourly temperature observations
+daily1  <- daily(days = 90, start_date = "2024-03-01")
 hourly1 <- hourly(daily1)
 head(hourly1)
 

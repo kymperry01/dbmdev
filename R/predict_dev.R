@@ -1,10 +1,13 @@
-#' Predict temperature-dependent development rates of diamondback moth
+#' Predict temperature-dependent development rates of the diamondback moth
 #' @description
-#' This is the main modelling function in the \code{dbmdev}
-#' package. It predicts temperature-dependent development rates of diamondback
-#' moth life stages at hourly time steps at a single geographic location. Predictions
-#' can be forward or back in time beginning from user-specified biofix (time
-#' point and developmental stage).
+#' \code{predict_dev} is the main modelling function interface in
+#' the \code{dbmdev} package.
+#' It is used to predict temperature-dependent development rates of individual
+#' life stages at hourly time steps, either forward or back in time, starting
+#' from a user-specified biofix (time point and insect developmental stage).
+#' It takes a single temperature data series.
+#' To predict development at many locations with separate
+#' temperature series, use \code{\link{predict_dev2}}.
 #'
 #' @param df A \code{data.frame} of hourly temperature observations with
 #' three variables named "datetime" (POSIX), "obs" (numeric
