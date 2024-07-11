@@ -10,11 +10,11 @@ predict_dev(
   params = dev_params(),
   start_date,
   start_hour = 12,
-  start_stage,
+  start_stage = "egg",
   start_dev = NULL,
   gens = 1,
   direction = "forward",
-  keep = NULL
+  keep = "stages"
 )
 }
 \arguments{
@@ -53,10 +53,9 @@ Run \code{row.names(devparams())} to see possible values.}
 
 \item{start_dev}{The proportion (numeric) of stage development from which to commence
 development predictions, ranging from 0 (no development) to 1
-(development complete). The default value of 0.5 is the
-mid-point of stage development. To predict the full
-development period of the starting life stage, set start_dev to 0 if
-modelling forward in time or to 1 if modelling back in time.}
+(development complete). By default, if not set, \code{start_dev} is set to
+0 if direction is "forward" in time and 1 if direction is "back", so that the
+full developmental period of start_stage is included in predictions.}
 
 \item{gens}{The number of complete generations to predict (numeric). This
 number is limited by the length of the temperature data time series.}
@@ -64,11 +63,13 @@ number is limited by the length of the temperature data time series.}
 \item{direction}{The direction in time, either "forward" or "back"
 (character). The default value is "forward".}
 
-\item{keep}{The results to output: "increments" outputs a \code{data.frame}
-with cumulative hourly developmental increments, while "stages" or
-"generations" output a \code{data.frames} summarising the time point when
-development commenced and completed. The default output is a list
-of three \code{data.frames} with all outputs.}
+\item{keep}{The results to output, either "increments", "stages", "gens",
+"all". The default value "stages" outputs a
+\code{data.frame} displaying the time steps when development of life stages
+commenced and completed. Specifiying "gens" outputs a \code{data.frame}
+summarising the generation times, and "increments" outputs all hourly and
+cumulative development increments. Specifying "all" outputs a list
+with all three data.frames.}
 }
 \value{
 \code{data.frame} or \code{list}.
@@ -78,10 +79,10 @@ of three \code{data.frames} with all outputs.}
 the \code{dbmdev} package.
 It is used to predict temperature-dependent development rates of individual
 life stages at hourly time steps, either forward or back in time, starting
-from a user-specified biofix (time point and insect developmental stage).
+from a user-specified bio-fix (time point and insect developmental stage).
 It takes a single temperature data series.
-To predict development at many locations with separate
-temperature series, use \code{\link{predict_dev2}}.
+To predict development rates at many locations with separate
+temperature series and bio-fixes, use \code{\link{predict_dev2}}.
 }
 \examples{
 library(dplyr)
@@ -94,38 +95,38 @@ h1 <- hourly(d1)
 dev_params() # developmental parameters for diamondback moth
 row.names(dev_params()) # possible values for "start_stage"
 
-# Predict forward 2 generations from the "egg" stage
+# Predict forward 1 generation from the egg stage
+predict_dev(h1, start_date = "2023-09-05")
+
+# Predict forward 2 generations from the mid-point of the "instar3" stage
 predict_dev(
-  df = h1,
+  h1,
   start_date = "2023-09-02",
-  start_stage = "egg",
+  start_stage = "instar3",
   start_dev = 0.5,
-  gens = 2,
-  direction = "forward",
-  keep = "stages"
+  gens = 2
   )
 
-# Predict back in time 1 generation from the 4th instar stage
+# Predict forward 4 generations from "instar4" and output generation times
 predict_dev(
-  df = h1,
-  start_date = "2024-03-01",
+  h1,
+  start_date = "2023-10-01",
   start_stage = "instar4",
-  start_dev = 0.5,
-  gens = 1,
-  direction = "back",
-  keep = "stages"
-  )
-
-# A warning is thrown if you try to predict beyond the available
-# temperature data
-predict_dev(
-  df = h1,
-  start_date = "2024-03-01",
-  start_stage = "instar1_2",
-  start_dev = 0,
-  gens = 5,
-  direction = "forward",
+  gens = 4,
   keep = "gens"
   )
 
+# Predict back in time 5 generations from the instar1_2 stage.
+# A warning is thrown if you try to predict beyond the available
+# temperature data.
+predict_dev(
+  h1,
+  start_date  = "2024-03-01",
+  start_stage = "instar1_2",
+  gens = 5,
+  direction = "back",
+  keep = "gens"
+  )
+
+## End
 }

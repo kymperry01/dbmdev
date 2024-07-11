@@ -11,7 +11,9 @@
 # Predict development
 # Allow multiple locations in one function?
 # User shoud be able to query the output to find out a timepoint when a particular event happened ("egg lay", or completion of pupal development (eclosion).
-# Perhaps this meeds a separate function to query the output 
+# Perhaps make this "end_stage" arg. Separate function to query the output?
+# Add a time delay value for moth/egg lay days. Default to one. Provides a user specified gap between generations.
+ 
 
 # notes
 # global variables https://stackoverflow.com/questions/12598242/global-variables-in-packages-in-r # generally a no-go
@@ -23,15 +25,22 @@
 # https://stackoverflow.com/questions/9439256/how-can-i-handle-r-cmd-check-no-visible-binding-for-global-variable-notes-when # hum and hope
 
 # Package names
+# generations
 # mothpredictr
 # pestpredictr
+# devpredict
+# devpredictr
+# dbmpredict
+# dbmpredictr
+# plutella
+# plutellr
 # dbmphenol
 # devpredictr
 # mothr
 # dbmoth
 # devr
 # mothdev
-# mothcalc # development calculator
+# mothcalc #
 # instars # too close to instaR which is an API for instagram
 # 
 # Add a function to visualise fitted temperature-development functions for lifestages 

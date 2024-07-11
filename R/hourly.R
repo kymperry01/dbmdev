@@ -68,6 +68,10 @@
 #'   ggtitle("Hourly temperature observations for 3 locations")
 hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
 
+  # check for a non-empty data.frame
+  if(nrow(df) == 0){
+    stop("The input data frame is empty")
+  }
 
   # check that required variables exist in input data frame
   reqd_vars  <- c("lat", "lon", "date", "min", "max")

@@ -24,6 +24,7 @@ Imports:
     suncalc
 Suggests:
     ggplot2,
+    RColorBrewer,
     tidyr,
     testthat (>= 3.0.0)
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
