@@ -104,7 +104,7 @@ hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
 
       if(i == 1) {
         # add line break to start and end if it's the first element
-        paste0(" In input dataframe,\n", msg, "\n")
+        paste0(" In the input dataframe 'df':\n", msg, "\n")
       } else {
         # no line break to if it's the end
         if(i == length(wrong)) msg

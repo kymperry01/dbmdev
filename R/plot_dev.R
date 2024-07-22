@@ -14,7 +14,7 @@
 #' @examples
 #' library(dplyr)
 #' library(ggplot2)
-#' library(RcolorBrewer)
+#' library(RColorBrewer)
 #'
 #' ## Note: Works properly for 1 gen only. Draft function.
 #'

@@ -21,10 +21,9 @@ predict_dev(
 \item{df}{A \code{data.frame} of hourly temperature observations with
 three variables named "datetime" (POSIX), "obs" (numeric
 temperature observations in degrees Celsius), and "location_key" (a
-character code that uniquely identifies a location, either provided by the
-user or arbitrarily by the \code{\link{hourly}} function.
+character string that uniquely identifies a location).
 Hourly temperatures can be interpolated from daily maximum minimum
-temperatures using \code{\link{hourly}}.}
+temperatures using the \code{\link{hourly}} function.}
 
 \item{FUN}{The name of the function used to model temperature-dependent
 development responses (character or unquoted function name).

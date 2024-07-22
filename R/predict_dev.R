@@ -12,10 +12,9 @@
 #' @param df A \code{data.frame} of hourly temperature observations with
 #' three variables named "datetime" (POSIX), "obs" (numeric
 #' temperature observations in degrees Celsius), and "location_key" (a
-#' character code that uniquely identifies a location, either provided by the
-#' user or arbitrarily by the \code{\link{hourly}} function.
+#' character string that uniquely identifies a location).
 #' Hourly temperatures can be interpolated from daily maximum minimum
-#' temperatures using \code{\link{hourly}}.
+#' temperatures using the \code{\link{hourly}} function.
 #'
 #' @param FUN The name of the function used to model temperature-dependent
 #' development responses (character or unquoted function name).
@@ -115,7 +114,7 @@ predict_dev <- function(
     df,
     FUN = briere2,
     params = dev_params(),
-    start_date,      # YYYY-MM-DD
+    start_date,       # YYYY-MM-DD
     start_hour  = 12, # hour in 24hr format
     start_stage = "egg",
     start_dev = NULL, # set to 0 if dir = fwd and 1 if direction = back
@@ -129,21 +128,73 @@ predict_dev <- function(
     stop("The input data frame is empty")
   }
 
+  # check the input dataframe has the required variables
+  # TO DO
+  # if (!"datetime" %in% names(df) || !"obs" %in% names(df)) {
+  #   stop("'df' must contain the variables `datetime` and `obs`")
+  # }
+
+  # check that required variables exist in input data frame
+  reqd_vars  <- c("location_key", "datetime", "obs")
+  reqd_class <- c("character", "POSIXct", "numeric")
+
+  miss_vars <- reqd_vars[which(!reqd_vars %in% names(df))]
+
+  if(length(miss_vars) > 0){
+    stop(
+      paste(
+        "Input data frame is missing the following required variables:",
+        paste(miss_vars, collapse = ", ")
+      )
+    )
+  }
+
+  # check that input data frame has correct variable classes
+
+  df_class <- sapply(df, class) %>%
+    sapply(dplyr::first) # test for POSIXct only for datetime var
+  names(reqd_class) <- reqd_vars
+
+  if(!identical(reqd_class[reqd_vars], df_class[reqd_vars])){
+
+    wrong <- which(!df_class[reqd_vars] == reqd_class[reqd_vars])
+
+    get_correct_class <- function(i){
+      msg <- paste("Variable named",
+                   names(reqd_class[wrong][i]),
+                   "must be class",
+                   reqd_class[wrong][i])
+
+      if(i == 1) {
+        # add line break to start and end if it's the first element
+        paste0(" In the input dataframe 'df':\n", msg, "\n")
+      } else {
+        # no line break to if it's the end
+        if(i == length(wrong)) msg
+      }
+
+    }
+    stop(seq_along(wrong) %>% lapply(get_correct_class))
+  }
+
+
   # catch typos
   direction[grepl("^b|B", direction)] <- "back"
   direction[grepl("^f|F", direction)] <- "forward"
 
   if (!direction %in% c("forward", "back")) {
-    stop("Direction must be forward or back")
+    stop("Direction must be 'forward' or 'back'")
   }
 
-  if (!is.null(keep)) {
-    keep[grepl("^i|I", keep)] <- "increments"
-    keep[grepl("^s|S", keep)] <- "stages"
-    keep[grepl("^g|G", keep)] <- "generations"
-    if (!keep %in% c("increments", "stages", "generations"))
-      keep <- NULL # if mis-specified, keep all output
-  }
+  # catch typos
+  keep[grepl("^i|I", keep)] <- "increments"
+  keep[grepl("^s|S", keep)] <- "stages"
+  keep[grepl("^g|G", keep)] <- "generations"
+
+  if (!keep %in% c("increments", "stages", "generations")) {
+    keep <- "stages" # if mis-specified, keep stages
+    message("'Keep' is mis-specified. Outputting life stages")
+    }
 
   # check for mis-specified function arguments
   # if(!FUN == "briere2"){
@@ -151,52 +202,47 @@ predict_dev <- function(
   # }
 
   # check for valid stages
-  if(!start_stage %in% row.names(dev_params())){
+  if(!start_stage %in% row.names(params)){
 
     stop(
       paste("start_stage must be one of: ",
-            paste(row.names(dev_params()), collapse = ", "))
+            paste(row.names(params), collapse = ", "))
       )
   }
 
   check_date <- suppressWarnings(lubridate::as_date(start_date))
   if(is.na(check_date)){
-    stop("start_date must be in YYYY-MM-DD format (character)")
+    stop("start_date must be a character string in YYYY-MM-DD format")
   }
 
   if (!as.character(start_date) %in% as.character(lubridate::date(df$datetime))) {
     stop(
       paste(
         "The specified start_date cannot be found in the",
-        "temperature data (df).\n",
-        "Check start_date is in YYYY-MM-DD format (character)")
+        "temperature data `df`.\n",
+        "Check that start_date is a string in YYYY-MM-DD format")
     )
   }
-
 
   # check there is a single location only
   # To do: we might not need location check (if we don't need a location_key)
   # If we remove, then just check for no duplicated datetimes in input
   if ("location_key" %in% names(df) && length(unique(df$location_key)) > 1) { # datetimes must be unique
-    stop("Multiple location_keys detected in df. Provide data for a single location.")
+    stop("Multiple location_keys detected in 'df'. Provide data for a single location only.")
   }
 
   if (anyDuplicated(df$datetime) > 0) { # datetimes must be unique
-    stop("There are duplicated datetimes in df")
+    stop("There are duplicated datetimes in 'df'")
   }
 
   if (!start_stage %in% rownames(params)) {
     stop(
-      "`start_stage` must be a life stage that exists in the `params` object"
+      "'start_stage' must be a life stage that exists in the 'params' object"
     )
   }
 
   if (!is.null(start_dev) && (start_dev < 0 | start_dev > 1)) {
-    stop("`start_dev` must be a value between 0 and 1")
-  }
-
-  if (!"datetime" %in% names(df) || !"obs" %in% names(df)) {
-    stop("`df` must contain the variables `datetime` and `obs`")
+    stop("'start_dev' must be a value between 0 and 1")
   }
 
   if (is.null(start_dev) && direction == "forward") {
@@ -341,8 +387,8 @@ predict_dev <- function(
     count_days() %>%
     dplyr::select(
       datetime, obs, gen, stage, dev, total_dev, total_days
-    ) %>%
-    as_tibble()
+    ) # %>%
+    #as_tibble() #Todo. Why tibble?
 
   summarise_stages <- function(df, direction) {
 
