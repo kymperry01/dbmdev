@@ -1,19 +1,18 @@
 #' Plot development predictions for the diamondback moth
 #'
-#' @param df A \code{data.frame} with developmental predictions output by
-#' \code{predict_dev}.
+#' @param x Developmental predictions as output by \code{predict_dev}.
 #' @param what What output to plot, either "increments", "stages",
 #' or "gens" (character).
+#' @param ... Passed to [ggplot2::geom_point()] and [ggplot2::geom_segment()]
+#' @param xlab,ylab Axis labels
+#' @param date_fmt Format for printing x-axis labels. See [base::strptime()]
 #'
-#' @param display Optionally display the plot in the console, TRUE or
-#' FALSE (logical).
 #'
 #' @return A \code{ggplot} object
 #' @export
 #'
 #' @examples
 #' library(dplyr)
-#' library(ggplot2)
 #' library(RColorBrewer)
 #'
 #' ## Note: Works properly for 1 gen only. Draft function.
@@ -29,52 +28,55 @@
 #' plot_dev(out1)
 #'
 #' ## End
+#' @import ggplot2
 plot_dev <- function(
-    df#,
-    #what = "stages" Todo: implement choice
-    ) {
+    x, what = "stages", ..., xlab = NULL, ylab = NULL, date_fmt = "%d-%b"
+) {
 
-  # control maximum size of outputs to plot
-  # add
+  what <- match.arg(what)
+  what <- match.arg(what, names(x))
+  df <- x[[what]]
 
-  ybreaks <- c(df$start_dev[1], df$complete_dev)
+  if (what == "stages") {
+    p <- .plot_stages(df, ..., date_fmt = date_fmt)
+  }
+  p + labs(x = xlab, y = ylab)
 
-  df %>%
-    ggplot(aes(
-      x = 0.5,
-      xend = 0.5,
-      y = start_dev,
-      yend = complete_dev,
-      colour = stage
-    )) +
-    geom_segment(
-      # lineend = "butt",
-      linejoin = "round",
-      linewidth = 3
-    ) +
-    geom_point(
-      pch = 21,
-      fill = "black",
-      colour = "black",
-      size = 1
-    ) +
-    coord_flip() +
-    theme_bw() +
+}
+
+.plot_stages <- function(df, ..., date_fmt) {
+
+  dot_args <- list(...)
+  ## For geom_point, set some defaults which can be overwritten easily
+  valid_point_args <- c("alpha", "colour", "fill", "shape", "size", "stroke")
+  def_point_args <- list(fill = "black", colour = "black", size = 1, shape = 21)
+  point_args <- c(
+    dot_args[names(dot_args) %in% valid_point_args],
+    def_point_args[!names(def_point_args) %in% names(dot_args)]
+  )
+  ## Repeat for geom_segment
+  valid_seg_args <- c("linetype", "linewidth", "lineend", "linejoin", "arrow")
+  def_seg_args <- list(lineend = "round", linewidth = 3)
+  seg_args <- c(
+    dot_args[names(dot_args) %in% valid_seg_args],
+    def_seg_args[!names(def_seg_args) %in% names(dot_args)]
+  )
+  point_args$y <- seg_args$y <- seg_args$yend <- 0.5
+
+  xbreaks <- c(df$start_dev[1], df$complete_dev)
+  ## Putting these here avoids the R CMD check, but also side-steps having to
+  ## introduce rlang as a dependency & having to use !!sym("start_dev") etc
+  start_dev <- complete_dev <- stage <- NULL
+  ggplot(
+    df, aes(x = start_dev, xend = complete_dev, colour = stage)
+  ) +
+    do.call("geom_segment", seg_args) +
+    do.call("geom_point", point_args) +
     theme(
-      aspect.ratio = 0.2,
-      panel.grid = element_blank(),
+      aspect.ratio = 0.2, panel.grid = element_blank(),
       axis.text.x = element_text(angle = 90, vjust = 0.5),
       axis.text.y = element_blank(),
       axis.ticks.y = element_blank()
     ) +
-    scale_colour_brewer(palette = "Set2") +
-    scale_y_datetime(
-      breaks = ybreaks,
-      date_labels = "%d-%b"
-    ) +
-    labs(x = NULL,
-         y = NULL,
-         colour = NULL)
+    scale_x_datetime(breaks = xbreaks, date_labels = date_fmt)
 }
-
-

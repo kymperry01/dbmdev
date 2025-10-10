@@ -4,7 +4,15 @@
 \alias{briere2}
 \title{Predict temperature-dependent development using Briere's model II}
 \usage{
-briere2(df, a, Tmin, Tmax, m, direction)
+briere2(
+  df,
+  a = NULL,
+  Tmin = NULL,
+  Tmax = NULL,
+  m = NULL,
+  stage = c("egg", "instar1_2", "instar3", "instar4", "prepupa", "pupa"),
+  direction = c("back", "forward")
+)
 }
 \arguments{
 \item{df}{A \code{data.frame} with a variable named "datetime" (POSIXct) and
@@ -17,6 +25,9 @@ hourly temperature observations in a variable named "obs" (double).}
 \item{Tmax}{Maximum temperature development threshold.}
 
 \item{m}{Power coefficient from the Briere model.}
+
+\item{stage}{The developmental stage if using values from \code{\link[=dev_params]{dev_params()}}.
+Any values supplied for a, m, Tmin or Tmax will overwrite these}
 
 \item{direction}{Either "forward" or "back" in time. Predictions are simply
 performed from the start date (direction = "forward") or end (direction =

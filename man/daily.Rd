@@ -4,7 +4,7 @@
 \alias{daily}
 \title{Create sample daily maximum and minimum temperature data}
 \usage{
-daily(locations = 1, days = 3, start_date = "2024-03-01", seed = NULL)
+daily(locations = 1L, days = 3L, start_date = "2024-03-01", ..., seed = NULL)
 }
 \arguments{
 \item{locations}{The number of locations to include}
@@ -12,6 +12,8 @@ daily(locations = 1, days = 3, start_date = "2024-03-01", seed = NULL)
 \item{days}{The number of days}
 
 \item{start_date}{The starting date in YYYY-MM-DD format (character)}
+
+\item{...}{Passed to \code{\link[lubridate:as_date]{lubridate::as_date()}}}
 
 \item{seed}{A random number that (if set) enables a reproducible \code{data.frame}}
 }
@@ -21,7 +23,7 @@ daily(locations = 1, days = 3, start_date = "2024-03-01", seed = NULL)
 \description{
 \code{daily} generates sample daily maximum and minimum temperature data for
 one or more locations for test-driving modelling functions in
-the \code{\link{dbmdev}} package.
+the \code{dbmdev} package.
 Sample geographic coordinates are added to enable interpolation of hourly
 temperatures using the \code{hourly} function.
 }

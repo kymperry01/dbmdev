@@ -6,8 +6,6 @@
 #' life stages at hourly time steps, either forward or back in time, starting
 #' from a user-specified bio-fix (time point and insect developmental stage).
 #' It takes a single temperature data series.
-#' To predict development rates at many locations with separate
-#' temperature series and bio-fixes, use \code{\link{predict_dev2}}.
 #'
 #' @param df A \code{data.frame} of hourly temperature observations with
 #' three variables named "datetime" (POSIX), "obs" (numeric
@@ -60,13 +58,14 @@
 #' summarising the generation times, and "increments" outputs all hourly and
 #' cumulative development increments. Specifying "all" outputs a list
 #' with all three data.frames.
+#'
+#' @param ... Passed to [lubridate::as_date()]
 #
 #'
 #' @return \code{data.frame} or \code{list}.
 #' @export
 #'
 #' @examples
-#' library(dplyr)
 #'
 #' # Sample hourly temperatures at a given location
 #' d1 <- daily(days = 200, start_date = "2023-09-01")
@@ -77,16 +76,20 @@
 #' row.names(dev_params()) # possible values for "start_stage"
 #'
 #' # Predict forward 1 generation from the egg stage
-#' predict_dev(h1, start_date = "2023-09-05")
+#' pred <- predict_dev(h1, start_date = "2023-09-05")
+#' pred$stages
+#' pred$generations
 #'
 #' # Predict forward 2 generations from the mid-point of the "instar3" stage
-#' predict_dev(
+#' pred2 <- predict_dev(
 #'   h1,
 #'   start_date = "2023-09-02",
 #'   start_stage = "instar3",
 #'   start_dev = 0.5,
 #'   gens = 2
-#'   )
+#'  )
+#' pred2$stages
+#' pred2$generations
 #'
 #' # Predict forward 4 generations from "instar4" and output generation times
 #' predict_dev(
@@ -94,8 +97,8 @@
 #'   start_date = "2023-10-01",
 #'   start_stage = "instar4",
 #'   gens = 4,
-#'   keep = "gens"
-#'   )
+#'   keep = "gen"
+#'  )
 #'
 #' # Predict back in time 5 generations from the instar1_2 stage.
 #' # A warning is thrown if you try to predict beyond the available
@@ -106,114 +109,73 @@
 #'   start_stage = "instar1_2",
 #'   gens = 5,
 #'   direction = "back",
-#'   keep = "gens"
-#'   )
+#'   keep = "gen"
+#' )
 #'
-#' ## End
+#'
+#' @importFrom lubridate as_date
+#' @importFrom dplyr bind_rows
+#' @importFrom utils tail
 predict_dev <- function(
     df,
-    FUN = briere2,
+    FUN = "briere2",
     params = dev_params(),
     start_date,       # YYYY-MM-DD
     start_hour  = 12, # hour in 24hr format
     start_stage = "egg",
     start_dev = NULL, # set to 0 if dir = fwd and 1 if direction = back
     gens = 1,
-    direction = "forward",
-    keep = "stages"
+    direction = c("forward", "back"),
+    keep = c("all", "stages", "increments", "generations"),
+    ...
 ) {
 
   # check for a non-empty data.frame
-  if(nrow(df) == 0){
-    stop("The input data frame is empty")
-  }
-
-  # check the input dataframe has the required variables
-  # TO DO
-  # if (!"datetime" %in% names(df) || !"obs" %in% names(df)) {
-  #   stop("'df' must contain the variables `datetime` and `obs`")
-  # }
+  stopifnot(is(df, "data.frame"))
+  if (!nrow(df)) stop("The input data frame is empty")
+  direction <- match.arg(direction)
+  keep <- match.arg(keep)
+  FUN <- match.arg(FUN)
+  # check for valid stages
+  stopifnot(all(c("a", "m", "Tmin", "Tmax") %in% colnames(params)))
+  start_stage <- match.arg(start_stage, rownames(params))
 
   # check that required variables exist in input data frame
   reqd_vars  <- c("location_key", "datetime", "obs")
-  reqd_class <- c("character", "POSIXct", "numeric")
+  nm <- names(df)
+  miss_vars <- setdiff(reqd_vars, nm)
 
-  miss_vars <- reqd_vars[which(!reqd_vars %in% names(df))]
-
-  if(length(miss_vars) > 0){
-    stop(
-      paste(
-        "Input data frame is missing the following required variables:",
-        paste(miss_vars, collapse = ", ")
-      )
+  if (length(miss_vars) > 0) {
+    msg <- paste(
+      "Input data frame is missing the following required variables:",
+      paste(miss_vars, collapse = ", ")
     )
+    stop(msg)
   }
 
   # check that input data frame has correct variable classes
-
-  df_class <- sapply(df, class) %>%
-    sapply(dplyr::first) # test for POSIXct only for datetime var
+  reqd_class <- c("character", "POSIXct", "numeric")
   names(reqd_class) <- reqd_vars
-
-  if(!identical(reqd_class[reqd_vars], df_class[reqd_vars])){
-
-    wrong <- which(!df_class[reqd_vars] == reqd_class[reqd_vars])
-
-    get_correct_class <- function(i){
-      msg <- paste("Variable named",
-                   names(reqd_class[wrong][i]),
-                   "must be class",
-                   reqd_class[wrong][i])
-
-      if(i == 1) {
-        # add line break to start and end if it's the first element
-        paste0(" In the input dataframe 'df':\n", msg, "\n")
-      } else {
-        # no line break to if it's the end
-        if(i == length(wrong)) msg
-      }
-
-    }
-    stop(seq_along(wrong) %>% lapply(get_correct_class))
+  chk_class <- vapply(reqd_vars, \(x) is(df[[x]], reqd_class[[x]]), logical(1))
+  if (!all(chk_class)) {
+    wrong <- paste(reqd_vars, reqd_class, sep = ": ")[!chk_class]
+    msg <- paste(
+      "The following columns from df should be the classes listed:\n",
+      paste(wrong, collapse = "\n")
+    )
+    stop(msg)
   }
-
-
-  # catch typos
-  direction[grepl("^b|B", direction)] <- "back"
-  direction[grepl("^f|F", direction)] <- "forward"
-
-  if (!direction %in% c("forward", "back")) {
-    stop("Direction must be 'forward' or 'back'")
-  }
-
-  # catch typos
-  keep[grepl("^i|I", keep)] <- "increments"
-  keep[grepl("^s|S", keep)] <- "stages"
-  keep[grepl("^g|G", keep)] <- "generations"
-
-  if (!keep %in% c("increments", "stages", "generations")) {
-    keep <- "stages" # if mis-specified, keep stages
-    message("'Keep' is mis-specified. Outputting life stages")
-    }
 
   # check for mis-specified function arguments
   # if(!FUN == "briere2"){
   #   stop("The only valid FUN currently is briere2. Did you misspell it?")
   # }
 
-  # check for valid stages
-  if(!start_stage %in% row.names(params)){
-
-    stop(
-      paste("start_stage must be one of: ",
-            paste(row.names(params), collapse = ", "))
-      )
-  }
-
-  check_date <- suppressWarnings(lubridate::as_date(start_date))
-  if(is.na(check_date)){
-    stop("start_date must be a character string in YYYY-MM-DD format")
-  }
+  # check the start date is in the correct format
+  if (!is(start_date, "Date"))
+    start_date <- tryCatch(as_date(start_date, ...), warning = \(w) w)
+  if (is(start_date, "simpleWarning")) stop("Failed to parse start_date")
+  stopifnot(start_hour < 24) # Is this needed?
 
   if (!as.character(start_date) %in% as.character(lubridate::date(df$datetime))) {
     stop(
@@ -227,233 +189,121 @@ predict_dev <- function(
   # check there is a single location only
   # To do: we might not need location check (if we don't need a location_key)
   # If we remove, then just check for no duplicated datetimes in input
-  if ("location_key" %in% names(df) && length(unique(df$location_key)) > 1) { # datetimes must be unique
+  if ("location_key" %in% names(df) && length(unique(df$location_key)) > 1) {
+    # datetimes must be unique
     stop("Multiple location_keys detected in 'df'. Provide data for a single location only.")
   }
+  if (anyDuplicated(df$datetime) > 0) stop("There are duplicated datetimes in 'df'")
 
-  if (anyDuplicated(df$datetime) > 0) { # datetimes must be unique
-    stop("There are duplicated datetimes in 'df'")
-  }
-
-  if (!start_stage %in% rownames(params)) {
-    stop(
-      "'start_stage' must be a life stage that exists in the 'params' object"
-    )
-  }
-
-  if (!is.null(start_dev) && (start_dev < 0 | start_dev > 1)) {
+  if (is.null(start_dev)) start_dev <- as.integer(direction == "back")
+  if (start_dev < 0 | start_dev > 1)
     stop("'start_dev' must be a value between 0 and 1")
-  }
-
-  if (is.null(start_dev) && direction == "forward") {
-    start_dev <- 0
-  }
-
-  if (is.null(start_dev) && direction == "back") {
-    start_dev <- 1
-  }
 
   startdt <- lubridate::ymd_hms(
     paste(start_date, start_hour, sep = "-"), truncated = 2
   )
 
   if (direction == "forward") {
-    df <- df %>%
-      dplyr::filter(datetime >= startdt) %>%
-      dplyr::arrange(datetime)
+    df <- df[df$datetime >= startdt,]
+    o <- order(df$datetime)
     all_stages <- rownames(params)
-  }
-
-  if (direction == "back") { # invert df and stages
-    df <- df %>%
-      dplyr::filter(datetime <= startdt) %>%
-      dplyr::arrange(desc(datetime))
+  } else {
+    df <- df[df$datetime <= startdt,]
+    o <- order(df$datetime, decreasing = TRUE)
     all_stages <- rev(rownames(params))
   }
+  df <- df[o, ]
 
   out_gens <- vector("list", gens)
-  fitted <- c()
-
-  # gen 1
+  fitted <- lubridate::Date()
   stages <- all_stages[which(all_stages == start_stage):length(all_stages)]
-  out <- vector("list", length(stages))
-  names(out) <- stages
 
-  for (s in stages) {
+  for (g in seq_len(gens)) {
 
-    tmp_df <- dplyr::filter(df, !datetime %in% fitted)
-    out[[s]] <- do.call(
-      FUN, c(list(df = tmp_df),
-             direction = direction,
-             params[s, ])
-    ) %>%
-      dplyr::mutate(stage = s, gen = 1)
-
-    if (s == start_stage) {
-
-      if (direction == "forward") {
-        out[[s]] <- out[[s]] %>%
-          dplyr::filter(total_dev < (1 - start_dev)) %>%
-          dplyr::mutate(total_dev = total_dev + start_dev)
-      }
-
-      if (direction == "back") {
-        out[[s]] <- out[[s]] %>%
-          dplyr::filter(total_dev > (1 - start_dev)) %>%
-          dplyr::mutate(total_dev = total_dev - (1 - start_dev))
-      }
-    }
-
-    fitted <- c(fitted, out[[s]]$datetime) %>%
-      lubridate::as_datetime() # reverts conversion to numeric in gen 1
-  }
-
-  out_gens[[1]] <- bind_rows(out)
-
-  # gens > 1
-  if (gens >= 2) {
-
+    # Initialise empty objects
     out <- vector("list", length(all_stages))
     names(out) <- all_stages
 
-    for (g in seq(gens)[-1]) {
+    for (s in all_stages) {
 
-      for (s in all_stages){
-
-        tmp_df <- dplyr::filter(df, !datetime %in% fitted)
-        out[[s]] <- do.call(
-          FUN, c(list(df = tmp_df),
-                 direction = direction,
-                 params[s, ])
-        ) %>%
-          dplyr::mutate(stage = s, gen = g)
-
-        fitted <- c(fitted, out[[s]]$datetime)
+      tmp_df <- df[!df$datetime %in% fitted,]
+      if (nrow(tmp_df)) {
+        args <- c(list(df = tmp_df), direction = direction, params[s, ])
+        out[[s]] <- do.call(FUN, args)
+        out[[s]]$gen <- g
+      } else {
+        ## Handle when all dates are fitted
+        out[[s]] <- data.frame(
+          datetime = lubridate::Date(), obs = numeric(), gen = integer(),
+          stage = character(), dev = numeric(), total_dev = numeric()
+        )
       }
-      out_gens[[g]] <- bind_rows(out)
+
+      if (s == start_stage & g == 1) {
+        ## Only needed in the first generation?
+        if (direction == "forward") {
+          out[[s]] <- out[[s]][out[[s]]$total_dev < (1 - start_dev),]
+          out[[s]]$total_dev <-  out[[s]]$total_dev + start_dev
+        } else {
+          out[[s]] <- out[[s]][out[[s]]$total_dev > (1 - start_dev),]
+          out[[s]]$total_dev <-  out[[s]]$total_dev - (1 - start_dev)
+        }
+      }
+      fitted <- lubridate::as_datetime(c(fitted, out[[s]]$datetime))
+
     }
+    out_gens[[g]] <- bind_rows(out, .id = "stage")
   }
 
   # check that output is complete
-  max_gen   <- max(which(sapply(out_gens, nrow) > 0))
-  max_stage <- dplyr::last(out_gens[[max_gen]][, "stage"])
-  max_dev   <- dplyr::last(out_gens[[max_gen]][, "total_dev"])
+  max_gen <- max(which(vapply(out_gens, nrow, integer(1)) > 0))
+  max_stage <- tail(out_gens[[max_gen]]$stage, 1)
+  max_dev <-  tail(out_gens[[max_gen]]$total_dev, 1)
 
   msg1 <- "Output may be incomplete because"
   msg2 <- "predictions exceed the time series of temperature data.\n"
-  msg3 <- paste0("Development is predicted to generation = ", max_gen,
-                 ", life stage = ", max_stage,
-                 ", and development = ", round(max_dev, 4))
+  msg3 <- paste0(
+    "Development is predicted to generation = ", max_gen, ", life stage = ",
+    max_stage, ", and development = ", round(max_dev, 4)
+  )
 
   # If there's a location_key in df, add this in error msg.
   # This is mainly for use with predict_development_locations
-  if ("location_key" %in% names(df)){
+  if ("location_key" %in% names(df)) {
     msg1 <- paste0(unique(df$location_key), ": ", msg1)
   }
 
   # truncate to remove any empty dfs to avoid later errors
-  out_gens <- out_gens[1:max_gen]
+  # out_gens <- out_gens[1:max_gen]
+  out_gens <- out_gens[vapply(out_gens, nrow, integer(1)) > 0]
 
   if (direction == "forward") {
-
-    if (max_gen < gens || !max_stage == dplyr::last(all_stages) ||
-        max_dev < 0.75) {
-
-      message(paste(msg1, msg2, msg3))
-    }
+    write_msg <- any(
+      max_gen < gens, !max_stage == tail(all_stages, 1), max_dev < 0.75
+    )
+  } else {
+    write_msg <- any(
+      max_gen < gens, !max_stage == tail(all_stages, 1), max_dev > 0.25
+    )
   }
-
-  if (direction == "back") {
-
-    if (max_gen < gens || !max_stage == dplyr::last(all_stages) ||
-        max_dev > 0.25) {
-
-      message(paste(msg1, msg2, msg3))
-    }
-  }
-
-  count_days <- function(df){
-    df %>%
-      dplyr::mutate(d = 1 / 24,
-                    total_days = cumsum(d), 3) %>%
-      dplyr::select(-d)
-  }
+  if (write_msg) message(paste(msg1, msg2, msg3))
 
   out_all <- vector("list", 3)
   names(out_all) <- c("increments", "stages", "generations")
-
-  out_all[[1]] <- out_gens %>%
-    dplyr::bind_rows() %>%
-    count_days() %>%
-    dplyr::select(
-      datetime, obs, gen, stage, dev, total_dev, total_days
-    ) # %>%
-    #as_tibble() #Todo. Why tibble?
-
-  summarise_stages <- function(df, direction) {
-
-    res <- df %>%
-      count_days %>%
-      dplyr::group_by(gen, stage) %>%
-      dplyr::summarise(
-        start_dev = min(datetime),
-        complete_dev = max(datetime),
-        total_days = max(total_days) - min(total_days),
-        mean_temp_oC = mean(obs), # oC may not be suitable for USA users!
-        .groups = "drop"
-      )
-
-    if (direction == "back") {
-
-      res %>%
-        dplyr::arrange(desc(complete_dev)) %>%
-        dplyr::select(gen, stage, complete_dev, dplyr::everything())
-
-    } else {
-      res
-    }
-  }
-
-  out_all[[2]] <- out_gens %>%
-    lapply(FUN = summarise_stages, direction = direction) %>%
-    dplyr::bind_rows()
-
-  summarise_gens <- function(df, direction) {
-
-    res <- df %>%
-      count_days %>%
-      dplyr::group_by(gen) %>%
-      dplyr::summarise(
-        start = dplyr::first(stage),
-        end =   dplyr::last(stage),
-        start_dev = min(datetime),
-        complete_dev = max(datetime),
-        total_days = max(total_days) - min(total_days),
-        mean_temp_oC = mean(obs, na.rm = TRUE),
-        .groups = "drop"
-      )
-
-    if (direction == "back") {
-
-      res %>%
-        dplyr::mutate(stages = paste(start, end, sep = " to ")) %>%
-        dplyr::arrange(desc(complete_dev)) %>%
-        dplyr::select(-end, -start) %>%
-        dplyr::select(gen, stages, complete_dev, dplyr::everything())
-
-    } else if (direction == "forward") {
-
-      res %>%
-        dplyr::mutate(stages = paste(start, end, sep = " to ")) %>%
-        dplyr::arrange(complete_dev) %>%
-        dplyr::select(-end, -start) %>%
-        dplyr::select(gen, stages, start_dev, dplyr::everything())
-
-    }
-  }
-  out_all[[3]] <- out_gens %>%
-    lapply(FUN = summarise_gens, direction = direction) %>%
-    dplyr::bind_rows()
+  out_all$increments <- bind_rows(out_gens)
+  out_all$increments$total_days <- cumsum(
+    seq_along(out_all$increments$datetime) / 24
+  )
+  inc_cols <- c(
+    "datetime", "obs", "gen", "stage", "dev", "total_dev", "total_days"
+  )
+  out_all$increments <- out_all$increments[inc_cols]
+  out_all$stages <- dplyr::bind_rows(
+    lapply(out_gens, FUN = .summarise_stages, direction = direction)
+  )
+  out_all$generations <- dplyr::bind_rows(
+    lapply(out_gens, .summarise_gens, direction = direction)
+  )
 
   # if (is.null(keep)) {return (out_all)}
   if (keep == "all")         {return(out_all)}
@@ -463,3 +313,55 @@ predict_dev <- function(
 
 }
 
+#' @keywords internal
+#' @importFrom tidyselect all_of everything
+.summarise_stages <- function(df, direction) {
+
+  df$total_days <- cumsum(seq_along(df$datetime) / 24)
+  gen_stage <- paste(df$gen, df$stage, sep = "_")
+  split_df <- split(df, gen_stage)
+  res <- lapply(
+    split_df,
+    \(x) {
+      data.frame(
+        gen = unique(x$gen), stage = unique(x$stage),
+        start_dev = min(x$datetime), complete_dev = max(x$datetime),
+        total_days = abs(diff(range(x$total_days))),
+        mean_temp_oC = mean(x$obs, na.rm = TRUE)
+      )
+    }
+  )
+  res <- bind_rows(res)
+  o <- order(res$complete_dev, decreasing = direction == "back")
+  res <- res[o, ]
+  dplyr::select(res, all_of(c("gen", "stage", "complete_dev")), everything())
+
+}
+
+
+#' @keywords internal
+#' @importFrom tidyselect all_of everything
+.summarise_gens <- function(df, direction) {
+
+  df$total_days <- cumsum(seq_along(df$datetime) / 24)
+  split_df <- split(df, f = df$gen)
+  res <- lapply(
+    split_df,
+    \(x) {
+      data.frame(
+        gen = unique(x$gen),
+        start = x$stage[1], end = x$stage[nrow(x)],
+        start_dev = min(x$datetime), complete_dev = max(x$datetime),
+        total_days = abs(diff(range(x$total_days))),
+        mean_temp_oC = mean(x$obs, na.rm = TRUE)
+      )
+    }
+  )
+  res <- dplyr::bind_rows(res)
+  res$stages <- paste(res$start, res$end, sep = " to ")
+  o <- order(res$complete_dev, decreasing = direction == "back")
+  res <- res[o, ]
+  res <- dplyr::select(res, -all_of(c("end", "start")))
+  dplyr::select(res, all_of(c("gen", "stages", "start_dev")), everything())
+
+}

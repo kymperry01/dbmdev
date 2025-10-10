@@ -11,7 +11,7 @@
 #'
 dev_params <- function(species = "dbm"){
 
-  if(species == "dbm"){
+  if (species == "dbm") {
 
     dev_params <- data.frame(
       egg       = c(0.0003592,   1.754,    35.08,     4.347),
@@ -20,8 +20,8 @@ dev_params <- function(species = "dbm"){
       instar4   = c(0.000674,   -1.22561,  32.04873, 15.27334),
       prepupa   = c(0.00181533,  3.963006, 33.04467,  4.317786),
       pupa      = c(0.000396921, 2.417172, 32.44556, 11.99131)
-      ) %>% t()
-
+      )
+    dev_params <- t(dev_params)
     colnames(dev_params) <- c("a", "Tmin", "Tmax", "m")
 
     return(dev_params)

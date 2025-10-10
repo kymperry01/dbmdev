@@ -3,8 +3,9 @@
 
 # Check errors
 test_that("errors when input dates are in the wrong format", {
-  expect_error(daily(start_date = "wrong format"),
-               "start_date must be in YYYY-MM-DD format")
+  expect_error(
+    daily(start_date = "wrong format"), "Failed to parse start_date"
+  )
 })
 
 

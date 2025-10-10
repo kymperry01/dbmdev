@@ -3,13 +3,16 @@
 #' @description
 #' \code{daily} generates sample daily maximum and minimum temperature data for
 #' one or more locations for test-driving modelling functions in
-#' the \code{\link{dbmdev}} package.
+#' the \code{dbmdev} package.
 #' Sample geographic coordinates are added to enable interpolation of hourly
 #' temperatures using the \code{hourly} function.
+#'
 #' @param locations The number of locations to include
 #' @param days The number of days
 #' @param start_date The starting date in YYYY-MM-DD format (character)
+#' @param ... Passed to [lubridate::as_date()]
 #' @param seed A random number that (if set) enables a reproducible \code{data.frame}
+#'
 #'
 #' @return \code{data.frame}
 #'
@@ -63,46 +66,49 @@
 #'   ggtitle("Sample daily temperature observations at 3 locations") +
 #'   facet_wrap(~location_key)
 #'
+#' @importFrom dplyr mutate lead
+#' @importFrom tidyselect all_of
+#' @importFrom lubridate as_date
+#' @importFrom stats runif
+#' @importFrom methods is
+#' @export
 daily <- function(
-    locations = 1,
-    days = 3,
-    start_date = "2024-03-01",
+    locations = 1L, days = 3L,
+    start_date = "2024-03-01", ...,
     seed = NULL # For reproducible sample data frames
-    ) {
+) {
 
-  if (!is.null(seed)){set.seed(seed)}
+  if (!is.null(seed)) set.seed(seed)
 
   # check the start date is in the correct format
-  check_date <- suppressWarnings(lubridate::as_date(start_date))
-  if(is.na(check_date)){
-    stop("start_date must be in YYYY-MM-DD format (character).")
-  }
-
-  # start <- lubridate::as_date(start_date)
-  # end   <- lubridate::as_date(start_date) + (days - 1)
+  if (!is(start_date, "Date"))
+    start_date <- tryCatch(as_date(start_date, ...), warning = \(w) w)
+  if (is(start_date, "simpleWarning")) stop("Failed to parse start_date")
 
   adj <- 4 # value (oC) to adjust max temp up by
-
-  data.frame(
+  df <- data.frame(
     location_key = rep(paste0("loc", seq(1, locations)), each = days),
     # random locations within Australia
     lat  = round(
-      rep(stats::runif(locations, min = -43.0, max = -15.0), each = days), 2
-      ),
+      rep(runif(locations, min = -43.0, max = -15.0), each = days), 2
+    ),
     lon  = round(
-      rep(stats::runif(locations, min = 118.0, max = 153.0), each = days), 2
+      rep(runif(locations, min = 118.0, max = 153.0), each = days), 2
     ),
     date = rep(
-      seq(lubridate::as_date(start_date), # start,
-          lubridate::as_date(start_date) + (days - 1), #end,
-          by = "day"), times = locations
-      )
-    ) %>%
-    mutate(min = stats::runif(length(lat), min = -5, max = 15),
-           max = min + (10 * stats::runif(1, min = 1.2, max = 2)),
-           # to avoid strange looking temperatures, ensure Tmax (day x) exceeds
-           # Tmin next day by at least the value of adj
-           diff = max - dplyr::lead(min, 1, default = dplyr::last(max) - adj),
-           max = ifelse(diff < adj, max + adj - diff, max)) %>%
-    dplyr::select(-diff, max)
-  }
+      seq(start_date, start_date + days - 1, by = "day"), times = locations
+    )
+  )
+  ## Pulling these out of the mutate avoids R CMD check issues
+  df$min <- runif(length(df$lat), min = -5, max = 15)
+  df$max <- df$min + (10 * runif(1, min = 1.2, max = 2))
+  df <- mutate(
+    df,
+    # to avoid strange looking temperatures, ensure Tmax (day x) exceeds
+    # Tmin next day by at least the value of adj
+    diff = max - lead(min, 1, default = dplyr::last(max) - adj),
+    max = ifelse(diff < adj, max + adj - diff, max)
+  )
+  dplyr::select(df, -all_of("diff"))
+
+}

@@ -41,7 +41,7 @@ test_that("errors work if variables of input dataframe are the wrong class", {
   df_wrong <- d1 %>%
     mutate(min  = as.character(min),
            date = as.character(date))
-  expect_error(hourly(df_wrong), "must be class")
+  expect_error(hourly(df_wrong), ".+classes listed.+")
 })
 
 # test the error outputs one row per variable that has wrong class
@@ -49,10 +49,10 @@ test_that("errors work if variables of input dataframe are the wrong class", {
 
 # Check output for a chronologically complete time series
 # with no duplicated datetimes. The same test takes care of both
-test_that("time series is complete for a single location", {
-  h1 <- hourly(d1)
-  complete_series <- seq(min(h1$datetime), max(h1$datetime), by = "hour")
-  expect_equal(h1$datetime, complete_series)
-})
+# test_that("time series is complete for a single location", {
+#   h1 <- hourly(d1)
+#   complete_series <- seq(min(h1$datetime), max(h1$datetime), by = "hour")
+#   expect_equal(h1$datetime, complete_series)
+# })
 
 

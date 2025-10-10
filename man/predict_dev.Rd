@@ -6,15 +6,16 @@
 \usage{
 predict_dev(
   df,
-  FUN = briere2,
+  FUN = "briere2",
   params = dev_params(),
   start_date,
   start_hour = 12,
   start_stage = "egg",
   start_dev = NULL,
   gens = 1,
-  direction = "forward",
-  keep = "stages"
+  direction = c("forward", "back"),
+  keep = c("all", "stages", "increments", "generations"),
+  ...
 )
 }
 \arguments{
@@ -69,6 +70,8 @@ commenced and completed. Specifiying "gens" outputs a \code{data.frame}
 summarising the generation times, and "increments" outputs all hourly and
 cumulative development increments. Specifying "all" outputs a list
 with all three data.frames.}
+
+\item{...}{Passed to \code{\link[lubridate:as_date]{lubridate::as_date()}}}
 }
 \value{
 \code{data.frame} or \code{list}.
@@ -80,11 +83,8 @@ It is used to predict temperature-dependent development rates of individual
 life stages at hourly time steps, either forward or back in time, starting
 from a user-specified bio-fix (time point and insect developmental stage).
 It takes a single temperature data series.
-To predict development rates at many locations with separate
-temperature series and bio-fixes, use \code{\link{predict_dev2}}.
 }
 \examples{
-library(dplyr)
 
 # Sample hourly temperatures at a given location
 d1 <- daily(days = 200, start_date = "2023-09-01")
@@ -95,16 +95,20 @@ dev_params() # developmental parameters for diamondback moth
 row.names(dev_params()) # possible values for "start_stage"
 
 # Predict forward 1 generation from the egg stage
-predict_dev(h1, start_date = "2023-09-05")
+pred <- predict_dev(h1, start_date = "2023-09-05")
+pred$stages
+pred$generations
 
 # Predict forward 2 generations from the mid-point of the "instar3" stage
-predict_dev(
+pred2 <- predict_dev(
   h1,
   start_date = "2023-09-02",
   start_stage = "instar3",
   start_dev = 0.5,
   gens = 2
-  )
+ )
+pred2$stages
+pred2$generations
 
 # Predict forward 4 generations from "instar4" and output generation times
 predict_dev(
@@ -112,8 +116,8 @@ predict_dev(
   start_date = "2023-10-01",
   start_stage = "instar4",
   gens = 4,
-  keep = "gens"
-  )
+  keep = "gen"
+ )
 
 # Predict back in time 5 generations from the instar1_2 stage.
 # A warning is thrown if you try to predict beyond the available
@@ -124,8 +128,8 @@ predict_dev(
   start_stage = "instar1_2",
   gens = 5,
   direction = "back",
-  keep = "gens"
-  )
+  keep = "gen"
+)
 
-## End
+
 }

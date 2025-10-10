@@ -10,8 +10,10 @@ Authors@R:
       person(given = "Sam",
              family = "Rogers",
              role = "ctb"),
-      person(given = "Stephen M.",
+      person(given = "Stevie",
              family = "Pederson",
+             email = "stephen.pederson.au@gmail.com",
+             comment = c(ORCID = "0000-0001-8197-3303"),
              role = "ctb"),
       person(given = "Mike A.",
              family = "Keller",
@@ -19,16 +21,17 @@ Authors@R:
 Description: Predict life-stage specific development rates of diamondback moth using hourly temperatures.
 Imports: 
     dplyr,
+    ggplot2,
     lubridate,
     lutz,
-    suncalc
+    methods,
+    suncalc,
+    tidyselect
 Suggests:
-    ggplot2,
     RColorBrewer,
     tidyr,
     testthat (>= 3.0.0)
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 LazyData: TRUE

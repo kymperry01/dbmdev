@@ -4,17 +4,26 @@
 \alias{plot_dev}
 \title{Plot development predictions for the diamondback moth}
 \usage{
-plot_dev(df)
+plot_dev(
+  x,
+  what = "stages",
+  ...,
+  xlab = NULL,
+  ylab = NULL,
+  date_fmt = "\%d-\%b"
+)
 }
 \arguments{
-\item{df}{A \code{data.frame} with developmental predictions output by
-\code{predict_dev}.}
+\item{x}{Developmental predictions as output by \code{predict_dev}.}
 
 \item{what}{What output to plot, either "increments", "stages",
 or "gens" (character).}
 
-\item{display}{Optionally display the plot in the console, TRUE or
-FALSE (logical).}
+\item{...}{Passed to \code{\link[ggplot2:geom_point]{ggplot2::geom_point()}} and \code{\link[ggplot2:geom_segment]{ggplot2::geom_segment()}}}
+
+\item{xlab, ylab}{Axis labels}
+
+\item{date_fmt}{Format for printing x-axis labels. See \code{\link[base:strptime]{base::strptime()}}}
 }
 \value{
 A \code{ggplot} object
@@ -24,7 +33,6 @@ Plot development predictions for the diamondback moth
 }
 \examples{
 library(dplyr)
-library(ggplot2)
 library(RColorBrewer)
 
 ## Note: Works properly for 1 gen only. Draft function.

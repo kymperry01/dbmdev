@@ -20,7 +20,7 @@ the output.}
 \code{data.frame} with a unique location key (character string) for each set
 of unique geographic coordinates, if one does not already exist. This is
 useful when modelling development at multiple locations using the function
-\code{predict_development}.}
+\code{predict_dev}.}
 
 \item{keep_suntimes}{Whether to preserve the sunrise and sunset
 times used for calculations in the output.}
@@ -33,7 +33,7 @@ times used for calculations in the output.}
 and minimum temperatures for a given geographic location using the
 model of Cesaraccio (2001).
 Hourly temperatures are used to predict temperature-dependent development
-rates of insects with the function \code{\link{predict_development}}.
+rates of insects with the function \code{\link{predict_dev}}.
 }
 \examples{
 library(dplyr)
@@ -67,6 +67,7 @@ hourly3 \%>\%
   axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
   labs(x = NULL, y = "Temperature (oC)") +
   ggtitle("Hourly temperature observations for 3 locations")
+
 }
 \references{
 Cesaraccio et al. (2001). An improved model for determining
