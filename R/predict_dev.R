@@ -317,7 +317,7 @@ predict_dev <- function(
 #' @importFrom tidyselect all_of everything
 .summarise_stages <- function(df, direction) {
 
-  df$total_days <- cumsum(seq_along(df$datetime) / 24)
+  df$total_days <- seq_along(df$datetime) / 24
   gen_stage <- paste(df$gen, df$stage, sep = "_")
   split_df <- split(df, gen_stage)
   res <- lapply(
@@ -343,7 +343,7 @@ predict_dev <- function(
 #' @importFrom tidyselect all_of everything
 .summarise_gens <- function(df, direction) {
 
-  df$total_days <- cumsum(seq_along(df$datetime) / 24)
+  df$total_days <- seq_along(df$datetime) / 24
   split_df <- split(df, f = df$gen)
   res <- lapply(
     split_df,
