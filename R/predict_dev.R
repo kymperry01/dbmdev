@@ -291,9 +291,7 @@ predict_dev <- function(
   out_all <- vector("list", 3)
   names(out_all) <- c("increments", "stages", "generations")
   out_all$increments <- bind_rows(out_gens)
-  out_all$increments$total_days <- cumsum(
-    seq_along(out_all$increments$datetime) / 24
-  )
+  out_all$increments$total_days <- seq_along(out_all$increments$datetime) / 24
   inc_cols <- c(
     "datetime", "obs", "gen", "stage", "dev", "total_dev", "total_days"
   )
