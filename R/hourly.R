@@ -152,8 +152,7 @@ hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
   # rounding to whole hours in lubridate::hour(sunrise/sunset)
   # dplyr::distinct(out, location_key, datetime, .keep_all = TRUE)
   out <- out[ret_cols]
-  dups <- do.call("cbind", lapply(out[c("location_key", "datetime")], duplicated))
-  dups <- rowSums(dups) == ncol(dups) # Find rows where all values are duplicates
+  dups <- duplicated(out[c("location_key", "datetime")])
   out[!dups,]
   ## Does this need sorting by anything?
 
