@@ -1,4 +1,4 @@
-# multiplication works
+# predict_dev example outputs are stable
 
     Code
       dev_params()
