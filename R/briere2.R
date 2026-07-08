@@ -72,7 +72,12 @@ briere2 <- function(
     direction = c("back", "forward")
 ) {
 
-  direction <- match.arg(direction)
+  # normalise and validate direction (accepts aliases, e.g. "f"/"b")
+  direction <- direction[1]
+  direction[grepl("^b|B", direction)] <- "back"
+  direction[grepl("^f|F", direction)] <- "forward"
+  if (!direction %in% c("forward", "back"))
+    stop("Direction must be forward or back")
   stopifnot(is(df, "data.frame"))
   stopifnot("datetime" %in% colnames(df))
   ## Use defaults if not provided

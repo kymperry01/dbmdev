@@ -90,10 +90,11 @@ hourly <- function(df, add_location_key = FALSE, keep_suntimes = FALSE) {
   # check that input data frame has correct variable classes
   chk_class <- vapply(reqd_vars, \(x) is(df[[x]], reqd_class[[x]]), logical(1))
   if (!all(chk_class)) {
-    wrong <- paste(reqd_vars, reqd_class, sep = ": ")[!chk_class]
+    wrong <- reqd_vars[!chk_class]
+    lines <- paste("Variable named", wrong, "must be class", reqd_class[wrong])
     msg <- paste(
-      "The following columns from df should be the classes listed:\n",
-      paste(wrong, collapse = "\n")
+      c("The following columns from df should be the classes listed:", lines),
+      collapse = "\n"
     )
     stop(msg)
   }

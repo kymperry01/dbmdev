@@ -133,12 +133,19 @@ predict_dev <- function(
   # check for a non-empty data.frame
   stopifnot(is(df, "data.frame"))
   if (!nrow(df)) stop("The input data frame is empty")
-  direction <- match.arg(direction)
+  # normalise and validate direction (accepts aliases, e.g. "f"/"b")
+  direction <- direction[1]
+  direction[grepl("^b|B", direction)] <- "back"
+  direction[grepl("^f|F", direction)] <- "forward"
+  if (!direction %in% c("forward", "back"))
+    stop("Direction must be 'forward' or 'back'")
+
   keep <- match.arg(keep)
   FUN <- match.arg(FUN)
-  # check for valid stages
   stopifnot(all(c("a", "m", "Tmin", "Tmax") %in% colnames(params)))
-  start_stage <- match.arg(start_stage, rownames(params))
+  # check for a valid start stage
+  if (!start_stage %in% rownames(params))
+    stop(paste("start_stage must be one of:", paste(rownames(params), collapse = ", ")))
 
   # check that required variables exist in input data frame
   reqd_vars  <- c("location_key", "datetime", "obs")
@@ -158,10 +165,11 @@ predict_dev <- function(
   names(reqd_class) <- reqd_vars
   chk_class <- vapply(reqd_vars, \(x) is(df[[x]], reqd_class[[x]]), logical(1))
   if (!all(chk_class)) {
-    wrong <- paste(reqd_vars, reqd_class, sep = ": ")[!chk_class]
+    wrong <- reqd_vars[!chk_class]
+    lines <- paste("Variable named", wrong, "must be class", reqd_class[wrong])
     msg <- paste(
-      "The following columns from df should be the classes listed:\n",
-      paste(wrong, collapse = "\n")
+      c("The following columns from df should be the classes listed:", lines),
+      collapse = "\n"
     )
     stop(msg)
   }
@@ -173,8 +181,9 @@ predict_dev <- function(
 
   # check the start date is in the correct format
   if (!is(start_date, "Date"))
-    start_date <- tryCatch(as_date(start_date, ...), warning = \(w) w)
-  if (is(start_date, "simpleWarning")) stop("Failed to parse start_date")
+    start_date <- suppressWarnings(as_date(start_date, ...))
+  if (length(start_date) != 1 || is.na(start_date))
+    stop("start_date must be a character string in YYYY-MM-DD format")
   stopifnot(start_hour < 24) # Is this needed?
 
   if (!as.character(start_date) %in% as.character(lubridate::date(df$datetime))) {
