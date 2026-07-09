@@ -1,0 +1,8 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+demoCode_dbmdev.Rmd
+devcode2023.R
+jobs.txt
+^LICENSE\.md$
+^rewrite-review\.md$
+^package-review\.md$
