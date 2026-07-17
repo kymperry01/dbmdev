@@ -7,11 +7,10 @@ built against the *pre-rewrite* code, so we could see how much behaviour changed
 
 This document records what the harness found. It has three parts:
 
-1. **Changes already made** in this branch — objective bug fixes, plus the
-   friendly error messages Kym asked to restore.
-2. **Open questions for Kym** — deliberate-looking interface changes still to
-   decide, one per row.
-3. **Documentation inconsistencies** — smaller cleanups.
+1. **Changes made** in this branch — objective bug fixes, the restored friendly
+   error messages, and the now-implemented interface decisions.
+2. **Resolved** — the interface differences, each now decided and implemented.
+3. **Documentation inconsistencies** — reconciled with the decisions.
 
 ## Version map
 
@@ -90,62 +89,86 @@ items **2.3** and **2.4** below.
   *"Direction must be forward or back"* (`briere2`).
 
 **Not touched:** `keep` handling in `predict_dev()` (default value, aliases,
-mis-spec fallback) — that is a larger change to the function's return *type* and is
-left open as items 2.1/2.2 for Kym.
+mis-spec fallback) — resolved subsequently in §1.4.
+
+### 1.4 Resolved the remaining open items + fixed two critical bugs
+
+**Decisions (Kym/Sam):** all Part 2 items are now closed (see the table). Implemented
+in this branch:
+
+- **2.1** — `keep` now defaults to `"stages"` (returns just the life-stage
+  `data.frame`); `"all"` still returns the 3-element list. One-line default change
+  (`keep` choices reordered so `"stages"` is first).
+- **2.2** — kept V2 behaviour: `match.arg` (exact or unambiguous partial matches like
+  `"s"`); any other value is a hard error (no alias table, no mis-spec fallback).
+- **2.5** — `briere2()` is now **forward-only** and no longer has a `direction`
+  argument; backward-in-time prediction is handled entirely inside `predict_dev()`
+  (it reverses the series, then flips the sign and cumulative total). Verified
+  equivalent to the old direction-based output for both forward and back.
+- **2.6** — kept the current column order (`location_crds` first); snapshots regenerated.
+
+**Two critical bugs found in the review were fixed first** (required before snapshots
+could be regenerated against correct output — see [`package-review.md`](package-review.md)
+BUG-1 and BUG-2):
+
+- **BUG-1** — `fitted <- lubridate::Date()` coerced datetimes to midnight, so every
+  prediction's stages overlapped. Seeded an empty POSIXct instead. V1 used `c()`.
+- **BUG-2** — `start_stage` was ignored (dead `stages` variable); generation 1 now
+  iterates from `start_stage`, later generations run all stages.
+
+After the fixes, the default forward `egg` output matches the V1 snapshot dates
+exactly, confirming correctness.
 
 ---
 
-## Part 2 — Open questions for Kym
+## Part 2 — Resolved
 
-Each row is a place where V2 still differs from V1. Decide per item: **keep V2,
-restore V1, or design something new?**
+Every row is now closed. (Originally "open questions for Kym".)
 
 | # | Area | V1 (tests expect) | V2 (current code) | Caught by | Status |
 |---|---|---|---|---|---|
-| 2.1 | `predict_dev` default `keep` | `"stages"` → returns a **tibble** | `"all"` → returns a **3-element list** | `test-predict_dev.R` snapshot + `:114` | **Open — Kym** |
-| 2.2 | `keep` aliases & bad input | `"s"`/`"g"`/`"gens"`/`"increments"` accepted; invalid → *message* + fall back to stages | only exact names; invalid → hard `match.arg` error | `test-predict_dev.R:113`, `:138` | **Open — Kym** |
+| 2.1 | `predict_dev` default `keep` | `"stages"` → returns a **tibble** | `"all"` → returns a **3-element list** | `test-predict_dev.R` snapshot + `:114` | ✅ Done (1.4) — default `"stages"`; `"all"` returns the list |
+| 2.2 | `keep` aliases & bad input | `"s"`/`"g"`/`"gens"`/`"increments"` accepted; invalid → *message* + fall back to stages | only exact names; invalid → hard `match.arg` error | `test-predict_dev.R:113`, `:138` | ✅ Done (1.4) — kept V2: `match.arg`, invalid errors |
 | 2.3 | Validation messages | friendly, per-item | terse `match.arg` / combined block | `test-predict_dev.R:46`,`:70`; `test-hourly.R:51` | ✅ Done (1.3) |
 | 2.4 | `direction` aliases + error | aliases accepted; friendly error | `match.arg` (case-sensitive); generic error | `test-briere2.R:22`; `test-predict_dev.R:70` | ✅ Done (1.3) |
-| 2.5 | `briere2` `direction` default | (no default; required arg) | defaults to **"back"** while `predict_dev` defaults **forward** | — (latent inconsistency) | **Open — Kym** |
-| 2.6 | Output column order | `location_key` first | `location_crds` first | `test-briere2.R` snapshot | **Open — Kym** |
-
-Notes:
-
-- **2.1 is the highest-impact open item:** it changes the default return *type* of
-  the main user-facing function (data frame vs list), and contradicts V2's own docs
-  (see Part 3). Suggest deciding this one first.
-- **2.5 / 2.6** are small, but the two functions should at least be made
-  *consistent* with each other before submission, whichever way we go.
+| 2.5 | `briere2` `direction` | (no default; required arg) | defaults to **"back"** while `predict_dev` defaults **forward** | `test-briere2.R` | ✅ Done (1.4) — `briere2` forward-only; back handled by `predict_dev` |
+| 2.6 | Output column order | `location_key` first | `location_crds` first | `test-briere2.R` snapshot | ✅ Done (1.4) — kept V2 order; snapshots regenerated |
 
 ---
 
-## Part 3 — Documentation inconsistencies
+## Part 3 — Documentation inconsistencies (fixed)
 
-Independent of the decisions above, to tidy once `keep` (2.1/2.2) is resolved:
+Reconciled with the decisions above:
 
-- **`predict_dev` `@param keep`** ([R/predict_dev.R](R/predict_dev.R)) documents the
-  default as `"stages"` and lists `"gens"` as a value, but the code default is
-  `"all"` and the accepted value is `"generations"`. Examples use `keep = "gens"`
-  and list-style access (`pred$stages`, `pred$generations`). Docs, code default,
-  and examples must be made to agree.
-- **`start_stage` doc** references `row.names(devparams())` — typo for `dev_params()`.
+- **`predict_dev` `@param keep`** — now documents the default `"stages"`, the value
+  `"generations"` (not `"gens"`), and that any other value errors. Examples updated:
+  the default call shows the `stages` data.frame directly, and list-style access uses
+  `keep = "all"`. ✅ Fixed
+- **`start_stage` doc** — `row.names(devparams())` → `row.names(dev_params())`. ✅ Fixed
+- **`briere2` docs** — removed the `direction` `@param`, fixed the empty `\code{}`
+  cross-reference (now `\code{\link{predict_dev}}`), and corrected `@return`
+  (`data.frame`, not `tibble`). ✅ Fixed
+- **`plot_dev` example** — updated to `keep = "all"` so it still runs under the new
+  default (see the note under *Related consequence* below). ✅ Fixed
+
+**Related consequence (flagged, not yet fully fixed):** changing the `keep` default to
+`"stages"` means `plot_dev(predict_dev(...))` now receives a data.frame rather than the
+list it expects — this is `package-review.md` **BUG-5**, and it is now *active* rather
+than latent. The example was adjusted as a stopgap; `plot_dev()` itself should be made
+to accept either shape.
 
 ---
 
 ## Current test status
 
-- **69 passing.**
-- **Remaining failures (3 blocks), all in `test-predict_dev.R` and all tied to the
-  open `keep` question (2.1 / 2.2):**
-  - *"predict_dev example outputs are stable"* — default output shape + `keep = "gens"` (2.1)
-  - *"predict_dev handles keep aliases, defaults, and return types"* (2.1 / 2.2)
-  - *"predict_dev warns through a message and falls back to stages for invalid keep"* (2.2)
-
-No failures remain in `test-briere2.R`, `test-hourly.R`, or `test-daily.R`.
+- **72 passing, 0 failing** (run with `NOT_CRAN=true` so the snapshot tests execute).
+- Snapshots (`briere2.md`, `predict_dev.md`) regenerated against the corrected,
+  bug-fixed output.
+- `man/*.Rd` regenerated via `roxygen2::roxygenise()`.
 
 ## Next steps
 
-1. **Decide the open Part 2 items with Kym** (start with 2.1).
-2. For each, either adjust the code (restore V1) or relax the test (accept V2),
-   then regenerate snapshots with `testthat::snapshot_accept()`.
-3. **Tidy Part 3 docs** to match the resolved `keep` behaviour.
+1. Address `package-review.md` **BUG-5** properly (make `plot_dev()` accept the default
+   `stages` data.frame), plus the remaining review items (BUG-3/4/6, packaging, docs).
+2. Consider committing `.Rbuildignore` (currently gitignored — `package-review.md`
+   PKG-1) so the new build-ignore entries are shared.
