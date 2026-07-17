@@ -36,8 +36,8 @@
 #' (numeric). The default value is 12 (midday).
 #'
 #' @param start_stage The starting life stage for development (character).
-#' Must be a life stage for which parameters exist in the \code{params} object
-#' Run \code{row.names(devparams())} to see possible values.
+#' Must be a life stage for which parameters exist in the \code{params} object.
+#' Run \code{row.names(dev_params())} to see possible values.
 #'
 #' @param start_dev The proportion (numeric) of stage development from which to commence
 #' development predictions, ranging from 0 (no development) to 1
@@ -51,13 +51,14 @@
 #' @param direction The direction in time, either "forward" or "back"
 #' (character). The default value is "forward".
 #'
-#' @param keep The results to output, either "increments", "stages", "gens",
-#' "all". The default value "stages" outputs a
+#' @param keep The results to output, one of "stages", "increments",
+#' "generations", or "all". The default value "stages" outputs a
 #' \code{data.frame} displaying the time steps when development of life stages
-#' commenced and completed. Specifiying "gens" outputs a \code{data.frame}
+#' commenced and completed. "generations" outputs a \code{data.frame}
 #' summarising the generation times, and "increments" outputs all hourly and
-#' cumulative development increments. Specifying "all" outputs a list
-#' with all three data.frames.
+#' cumulative development increments. "all" outputs a list
+#' with all three data.frames. The value must be given in full (partial matches
+#' such as "s" are also accepted; any other value is an error).
 #'
 #' @param ... Passed to [lubridate::as_date()]
 #
@@ -75,8 +76,12 @@
 #' dev_params() # developmental parameters for diamondback moth
 #' row.names(dev_params()) # possible values for "start_stage"
 #'
-#' # Predict forward 1 generation from the egg stage
-#' pred <- predict_dev(h1, start_date = "2023-09-05")
+#' # Predict forward 1 generation from the egg stage.
+#' # By default (keep = "stages") a life-stage summary data.frame is returned.
+#' predict_dev(h1, start_date = "2023-09-05")
+#'
+#' # Use keep = "all" to return increments, stages and generations together
+#' pred <- predict_dev(h1, start_date = "2023-09-05", keep = "all")
 #' pred$stages
 #' pred$generations
 #'
@@ -86,7 +91,8 @@
 #'   start_date = "2023-09-02",
 #'   start_stage = "instar3",
 #'   start_dev = 0.5,
-#'   gens = 2
+#'   gens = 2,
+#'   keep = "all"
 #'  )
 #' pred2$stages
 #' pred2$generations
@@ -97,7 +103,7 @@
 #'   start_date = "2023-10-01",
 #'   start_stage = "instar4",
 #'   gens = 4,
-#'   keep = "gen"
+#'   keep = "generations"
 #'  )
 #'
 #' # Predict back in time 5 generations from the instar1_2 stage.
@@ -109,7 +115,7 @@
 #'   start_stage = "instar1_2",
 #'   gens = 5,
 #'   direction = "back",
-#'   keep = "gen"
+#'   keep = "generations"
 #' )
 #'
 #'
@@ -126,7 +132,7 @@ predict_dev <- function(
     start_dev = NULL, # set to 0 if dir = fwd and 1 if direction = back
     gens = 1,
     direction = c("forward", "back"),
-    keep = c("all", "stages", "increments", "generations"),
+    keep = c("stages", "all", "increments", "generations"),
     ...
 ) {
 
@@ -224,27 +230,35 @@ predict_dev <- function(
   df <- df[o, ]
 
   out_gens <- vector("list", gens)
-  fitted <- lubridate::Date()
+  # empty POSIXct so c() preserves sub-day precision from the first iteration
+  fitted <- lubridate::as_datetime(character())
+  # the first generation starts at start_stage; later generations run all stages
   stages <- all_stages[which(all_stages == start_stage):length(all_stages)]
 
   for (g in seq_len(gens)) {
 
     # Initialise empty objects
-    out <- vector("list", length(all_stages))
-    names(out) <- all_stages
+    gen_stages <- if (g == 1) stages else all_stages
+    out <- vector("list", length(gen_stages))
+    names(out) <- gen_stages
 
-    for (s in all_stages) {
+    for (s in gen_stages) {
 
       tmp_df <- df[!df$datetime %in% fitted,]
       if (nrow(tmp_df)) {
-        args <- c(list(df = tmp_df), direction = direction, params[s, ])
-        out[[s]] <- do.call(FUN, args)
+        ## briere2 models forward in supplied row order; for back predictions
+        ## df is already reverse-ordered, so flip sign and cumulative total here
+        out[[s]] <- do.call(FUN, c(list(df = tmp_df), params[s, ]))
+        if (direction == "back") {
+          out[[s]]$dev <- -out[[s]]$dev
+          out[[s]]$total_dev <- 1 + cumsum(out[[s]]$dev)
+        }
         out[[s]]$gen <- g
       } else {
         ## Handle when all dates are fitted
         out[[s]] <- data.frame(
-          datetime = lubridate::Date(), obs = numeric(), gen = integer(),
-          stage = character(), dev = numeric(), total_dev = numeric()
+          datetime = lubridate::as_datetime(character()), obs = numeric(),
+          gen = integer(), dev = numeric(), total_dev = numeric()
         )
       }
 

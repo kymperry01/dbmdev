@@ -10,13 +10,13 @@ briere2(
   Tmin = NULL,
   Tmax = NULL,
   m = NULL,
-  stage = c("egg", "instar1_2", "instar3", "instar4", "prepupa", "pupa"),
-  direction = c("back", "forward")
+  stage = c("egg", "instar1_2", "instar3", "instar4", "prepupa", "pupa")
 )
 }
 \arguments{
 \item{df}{A \code{data.frame} with a variable named "datetime" (POSIXct) and
-hourly temperature observations in a variable named "obs" (double).}
+hourly temperature observations in a variable named "obs" (double). Rows are
+processed in the order supplied.}
 
 \item{a}{Constant from Briere's model.}
 
@@ -28,24 +28,21 @@ hourly temperature observations in a variable named "obs" (double).}
 
 \item{stage}{The developmental stage if using values from \code{\link[=dev_params]{dev_params()}}.
 Any values supplied for a, m, Tmin or Tmax will overwrite these}
-
-\item{direction}{Either "forward" or "back" in time. Predictions are simply
-performed from the start date (direction = "forward") or end (direction =
-"back") of the provided data.}
 }
 \value{
-A \code{tibble} with the original variables and new columns
-"dev" and "total_dev" added. Only rows where 0 <= "total_dev" < 1 are kept.
+A \code{data.frame} with the original variables and new columns
+"dev" and "total_dev" added. Only rows where "total_dev" < 1 are kept.
 }
 \description{
 Calculate hourly development rate for a given insect species
 and life stage using hourly temperature observations and insect development
 parameters.
 
-This is an internal modelling function called by \code{} to calculate the
+This modelling function is called by \code{\link{predict_dev}} to calculate the
 point in time that development for the modelled life stage is completed.
-Models are run with the input data without considering datetime range of
-interest.
+It always models development \emph{forward} through the supplied data, in the
+row order provided. Backward-in-time prediction is handled by
+\code{\link{predict_dev}}, not here.
 }
 \details{
 Implements Briere's temperature-dependent development model equation 2 (Briere 1999) to calculate
@@ -62,27 +59,17 @@ head(hourly1)
 par <- dev_params()
 par
 
-# Predict development forward in time for the "egg" stage
+# Predict development for the "egg" stage
 s <- "egg"
 out1 <- briere2(df   = hourly1,
                 a    = par[s, "a"],
                 Tmin = par[s, "Tmin"],
                 Tmax = par[s, "Tmax"],
-                m    = par[s, "m"],
-                direction = "forward")
+                m    = par[s, "m"])
 head(out1)
 tail(out1) # see the datetime when stage development is complete
 
-# Predict development backwards in time for the "instar3" stage
-s <- "instar3"
-out2 <- briere2(df   = hourly1,
-                a    = par[s, "a"],
-                Tmin = par[s, "Tmin"],
-                Tmax = par[s, "Tmax"],
-                m    = par[s, "m"],
-                direction = "back")
-head(out2)
-tail(out2) # see the datetime when stage development started
+# For predictions forward or back in time from a bio-fix, use predict_dev()
 
 ## End
 

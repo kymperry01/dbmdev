@@ -25,7 +25,7 @@ test_that("predict_dev example outputs are stable", {
     start_date = "2023-10-01",
     start_stage = "instar4",
     gens = 4,
-    keep = "gens"
+    keep = "generations"
   ))
 
   # Predict back in time 5 generations from the instar1_2 stage.
@@ -37,7 +37,7 @@ test_that("predict_dev example outputs are stable", {
     start_stage = "instar1_2",
     gens = 5,
     direction = "back",
-    keep = "gens"
+    keep = "generations"
   ))
 
 
@@ -135,11 +135,9 @@ test_that("predict_dev normalizes aliases for direction and start_dev defaults",
   expect_equal(back_default, back_explicit)
 })
 
-test_that("predict_dev warns through a message and falls back to stages for invalid keep", {
-  expect_message(
-    res <- predict_dev(h1, start_date = "2023-09-05", keep = "unknown"),
-    "'Keep' is mis-specified. Outputting life stages"
+test_that("predict_dev errors on an invalid keep value", {
+  expect_error(
+    predict_dev(h1, start_date = "2023-09-05", keep = "unknown"),
+    "should be one of"
   )
-
-  expect_true(all(c("gen", "stage", "start_dev", "complete_dev") %in% names(res)))
 })

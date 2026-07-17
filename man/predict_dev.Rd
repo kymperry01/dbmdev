@@ -14,7 +14,7 @@ predict_dev(
   start_dev = NULL,
   gens = 1,
   direction = c("forward", "back"),
-  keep = c("all", "stages", "increments", "generations"),
+  keep = c("stages", "all", "increments", "generations"),
   ...
 )
 }
@@ -48,8 +48,8 @@ YYYY-MM-DD format (character)}
 (numeric). The default value is 12 (midday).}
 
 \item{start_stage}{The starting life stage for development (character).
-Must be a life stage for which parameters exist in the \code{params} object
-Run \code{row.names(devparams())} to see possible values.}
+Must be a life stage for which parameters exist in the \code{params} object.
+Run \code{row.names(dev_params())} to see possible values.}
 
 \item{start_dev}{The proportion (numeric) of stage development from which to commence
 development predictions, ranging from 0 (no development) to 1
@@ -63,13 +63,14 @@ number is limited by the length of the temperature data time series.}
 \item{direction}{The direction in time, either "forward" or "back"
 (character). The default value is "forward".}
 
-\item{keep}{The results to output, either "increments", "stages", "gens",
-"all". The default value "stages" outputs a
+\item{keep}{The results to output, one of "stages", "increments",
+"generations", or "all". The default value "stages" outputs a
 \code{data.frame} displaying the time steps when development of life stages
-commenced and completed. Specifiying "gens" outputs a \code{data.frame}
+commenced and completed. "generations" outputs a \code{data.frame}
 summarising the generation times, and "increments" outputs all hourly and
-cumulative development increments. Specifying "all" outputs a list
-with all three data.frames.}
+cumulative development increments. "all" outputs a list
+with all three data.frames. The value must be given in full (partial matches
+such as "s" are also accepted; any other value is an error).}
 
 \item{...}{Passed to \code{\link[lubridate:as_date]{lubridate::as_date()}}}
 }
@@ -94,8 +95,12 @@ h1 <- hourly(d1)
 dev_params() # developmental parameters for diamondback moth
 row.names(dev_params()) # possible values for "start_stage"
 
-# Predict forward 1 generation from the egg stage
-pred <- predict_dev(h1, start_date = "2023-09-05")
+# Predict forward 1 generation from the egg stage.
+# By default (keep = "stages") a life-stage summary data.frame is returned.
+predict_dev(h1, start_date = "2023-09-05")
+
+# Use keep = "all" to return increments, stages and generations together
+pred <- predict_dev(h1, start_date = "2023-09-05", keep = "all")
 pred$stages
 pred$generations
 
@@ -105,7 +110,8 @@ pred2 <- predict_dev(
   start_date = "2023-09-02",
   start_stage = "instar3",
   start_dev = 0.5,
-  gens = 2
+  gens = 2,
+  keep = "all"
  )
 pred2$stages
 pred2$generations
@@ -116,7 +122,7 @@ predict_dev(
   start_date = "2023-10-01",
   start_stage = "instar4",
   gens = 4,
-  keep = "gen"
+  keep = "generations"
  )
 
 # Predict back in time 5 generations from the instar1_2 stage.
@@ -128,7 +134,7 @@ predict_dev(
   start_stage = "instar1_2",
   gens = 5,
   direction = "back",
-  keep = "gen"
+  keep = "generations"
 )
 
 

@@ -41,8 +41,9 @@ library(RColorBrewer)
 d1 <- daily(days = 200, start_date = "2023-09-01")
 h1 <- hourly(d1)
 
-# Predict forward 2 generations from the "egg" stage
-out1 <- predict_dev(h1, start_date = "2023-09-02", gens = 1)
+# Predict forward 1 generation from the "egg" stage.
+# plot_dev() currently expects the full list, so use keep = "all".
+out1 <- predict_dev(h1, start_date = "2023-09-02", gens = 1, keep = "all")
 
 # Plot
 plot_dev(out1)
